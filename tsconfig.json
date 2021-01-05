@@ -1,0 +1,16 @@
+{
+	"extends": "@tsconfig/node12/tsconfig.json",
+
+	"compilerOptions": {
+		"module": "system",
+		"target": "es6",
+		"preserveConstEnums": true,
+		"outFile": "built/contract.js",
+		"sourceMap": true,
+		"removeComments": true,
+		"lib": ["es2020"]
+	},
+
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "**/*.spec.ts"]
+}

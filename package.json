@@ -1,0 +1,15 @@
+{
+	"scripts": {
+		"test": "xo"
+	},
+	"devDependencies": {
+		"prettier": "2.2.1",
+		"xo": "^0.36.1"
+	},
+	"xo": {
+		"prettier": true
+	},
+	"dependencies": {
+		"@tsconfig/node12": "^1.0.7"
+	}
+}
