@@ -3,18 +3,27 @@ import {StateInterface,
 	ArweaveAddress,
 	GetFunctions,
 	SetFunctions,
-	ResultType
+	InputType,
+	ResultType,
+	SetFunctionInput,
+	GetFunctionInput
 } from './interfaces';
-import {isArweaveAddress} from './typeguards';
+import {isArweaveAddress, InputHandler} from './typeguards';
 import {ProposedExecutable,
 	CheckingExecutable,
 	CheckedExecutable,
 	filterExecutable} from './set-functions-interfaces';
 
-declare const ContractError: any;
+declare const ContractError: Error;
 
 declare const SmartWeave: any;
 
+interface ActionInterface {
+	input: InputType;
+	caller: ArweaveAddress;
+}
+
+/*
 class Action {
 	public _input!: InputInterface;
 	private _caller!: ArweaveAddress;
@@ -33,11 +42,7 @@ class Action {
 			this._caller = addy;
 		} else {
 			// TODO: report eslint bug.
-			/* eslint-disable
-			@typescript-eslint/restrict-template-expressions */
 			throw new Error(`${addy} is not an arweave address`);
-			/* eslint-enable
-			@typescript-eslint/restrict-template-expressions */
 		}
 	}
 
@@ -49,12 +54,20 @@ class Action {
 		this._input = inp;
 	}
 }
+*/
+
+/* Hm:
+get(target: InputInterface, p: string) {
+	return p ===
+}
+*/
 
 function handle(
 	state: StateInterface,
-	action: Action
+	action: ActionInterface
 ): {state: StateInterface} | {result: ResultType} {
-	switch (action.input.function) {
+	let input = new Proxy ( action.input, InputHandler );
+	switch (input.function) {
 		case GetFunctions.unexecuted:
 			return {result: filterExecutable(
 				state.executables,
@@ -71,60 +84,23 @@ function handle(
 				CheckedExecutable
 			)};
 		case SetFunctions.add:
-			if (typeof action.input.program_address !== 'string') {
-				throw new TypeError('Program address must be defined');
-			} else if (!isArweaveAddress(action.input.program_address)) {
-				throw new TypeError('Program address must be arweave address');
-			} else if (action.input.executable instanceof
-				ProposedExecutable &&
-				!state.executables[action.input.program_address]
-			) {
-				return Object.defineProperty(
-					state.executables,
-					action.input.program_address,
-					action.input.executable
-				);
-			}
-
-			throw new TypeError('no!');
+			return Object.defineProperty(
+				state.executables,
+				input.program_address,
+				input.executable
+			);
 		case SetFunctions.check:
-			if (typeof action.input.program_address !== 'string') {
-				throw new TypeError('Program address must be defined');
-			} else if (!isArweaveAddress(action.input.program_address)) {
-				throw new TypeError('Program address must be arweave address');
-			} else if (action.input.executable instanceof
-				CheckedExecutable &&
-				state.executables[
-					action.input.program_address
-				] instanceof CheckingExecutable
-			) {
-				return Object.defineProperty(
-					state.executables,
-					action.input.program_address,
-					action.input.executable
-				);
-			}
-
-			throw new TypeError('no!');
+			return Object.defineProperty(
+				state.executables,
+				input.program_address,
+				input.executable
+			);
 		case SetFunctions.run:
-			if (typeof action.input.program_address !== 'string') {
-				throw new TypeError('Program address must be defined');
-			} else if (!isArweaveAddress(action.input.program_address)) {
-				throw new TypeError('Program address must be arweave address');
-			} else if (action.input.executable instanceof
-				CheckingExecutable &&
-				state.executables[
-					action.input.program_address
-				] instanceof ProposedExecutable
-			) {
-				return Object.defineProperty(
-					state.executables,
-					action.input.program_address,
-					action.input.executable
-				);
-			}
-
-			throw new TypeError('no!');
+			return Object.defineProperty(
+				state.executables,
+				input.program_address,
+				input.executable
+			);
 		default:
 			throw new Error('Invalid function call');
 	}

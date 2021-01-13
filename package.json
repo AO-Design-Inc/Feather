@@ -1,8 +1,12 @@
 {
 	"scripts": {
-		"test": "xo"
+		"test": "xo",
+		"build": "babel built -d dist"
 	},
 	"devDependencies": {
+		"@babel/cli": "^7.12.10",
+		"@babel/core": "^7.12.10",
+		"@babel/preset-env": "^7.12.11",
 		"prettier": "2.2.1",
 		"xo": "^0.36.1"
 	},
