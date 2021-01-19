@@ -7,14 +7,6 @@ export interface StateInterface {
 	executables: ExecutableHashMap;
 }
 
-/* Test:
-export interface InputInterface {
-	function: GetFunctions | SetFunctions;
-	executable: ExecutableType;
-	program_address?: ArweaveAddress;
-}
-*/
-
 // There HAS to be a better refactor with conditional types here
 export interface InputInterface {
 	function: GetFunctions | SetFunctions;
@@ -28,12 +20,12 @@ export interface GetFunctionInput extends Partial<InputInterface> {
 	function: GetFunctions;
 }
 
+export class SetFunctionInput {}
 export interface SetFunctionInput extends InputInterface {
 	function: SetFunctions;
 	executable: ExecutableType;
 	program_address: ArweaveAddress;
 }
-export class SetFunctionInput {}
 
 export type InputType = GetFunctionInput | SetFunctionInput;
 export enum GetFunctions {

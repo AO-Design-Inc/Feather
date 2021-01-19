@@ -40,7 +40,10 @@ export class CheckingExecutable {
 	result_height!: number;
 }
 
-export type ExecutableType = CheckedExecutable | ProposedExecutable | CheckingExecutable;
+export type ExecutableType =
+	| CheckedExecutable
+	| ProposedExecutable
+	| CheckingExecutable;
 
 interface KeyValue {
 	[0]: ArweaveAddress;

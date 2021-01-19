@@ -4,18 +4,15 @@ import {StateInterface,
 	GetFunctions,
 	SetFunctions,
 	InputType,
-	ResultType,
-	SetFunctionInput,
-	GetFunctionInput
+	ResultType
 } from './interfaces';
-import {isArweaveAddress, InputHandler} from './typeguards';
+import {InputHandler} from './typeguards';
 import {ProposedExecutable,
 	CheckingExecutable,
 	CheckedExecutable,
 	filterExecutable} from './set-functions-interfaces';
 
-declare const ContractError: Error;
-
+declare const ContractError: any;
 declare const SmartWeave: any;
 
 interface ActionInterface {
@@ -23,50 +20,11 @@ interface ActionInterface {
 	caller: ArweaveAddress;
 }
 
-/*
-class Action {
-	public _input!: InputInterface;
-	private _caller!: ArweaveAddress;
-
-	constructor(_caller: string, _input: InputInterface) {
-		this.caller = _caller;
-		this.input = _input;
-	}
-
-	get caller(): ArweaveAddress {
-		return this._caller;
-	}
-
-	set caller(addy: string) {
-		if (isArweaveAddress(addy)) {
-			this._caller = addy;
-		} else {
-			// TODO: report eslint bug.
-			throw new Error(`${addy} is not an arweave address`);
-		}
-	}
-
-	get input() {
-		return this._input;
-	}
-
-	set input(inp: InputInterface) {
-		this._input = inp;
-	}
-}
-*/
-
-/* Hm:
-get(target: InputInterface, p: string) {
-	return p ===
-}
-*/
-
-function handle(
+export function handle(
 	state: StateInterface,
 	action: ActionInterface
 ): {state: StateInterface} | {result: ResultType} {
-	let input = new Proxy ( action.input, InputHandler );
+	const input = new Proxy(action.input, InputHandler);
 	switch (input.function) {
 		case GetFunctions.unexecuted:
 			return {result: filterExecutable(
@@ -102,6 +60,6 @@ function handle(
 				input.executable
 			);
 		default:
-			throw new Error('Invalid function call');
+			throw new ContractError('Invalid function call');
 	}
 }

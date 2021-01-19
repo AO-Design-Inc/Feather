@@ -112,7 +112,8 @@ export const InputHandler: ProxyHandler<InputType> = {
 
 					throw new ContractError('lol!');
 				default:
-					throw new Error('Invalid property');
+					throw new
+					ContractError('Invalid property');
 			}
 		}
 	}
