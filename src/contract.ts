@@ -212,7 +212,7 @@ export function handle(
 
 		case 'proposed':
 			return {
-				result: Object.entries(state.executables).filter((keyval) =>
+				result: Object.entries(state.executables).filter(keyval =>
 					isProposedExecutable(keyval[1])
 				)
 			};
