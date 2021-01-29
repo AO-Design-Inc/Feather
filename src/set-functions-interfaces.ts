@@ -13,12 +13,18 @@ declare const ContractError: any;
 declare const SmartWeave: any;
 
 export interface ExecutableInterface {
+	executable_address: ArweaveAddress;
 	executable_kind: ExecutableKinds;
 	quantity?: number;
-	result_address: ArweaveAddress;
 	birth_height: number;
-	result_height: number;
+	result: ExecResultInterface;
 	checked: boolean;
+}
+
+export interface ExecResultInterface {
+	result_address: ArweaveAddress;
+	result_height: number;
+	result_giver: ArweaveAddress;
 }
 
 export class ProposedExecutable {

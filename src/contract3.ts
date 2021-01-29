@@ -24,6 +24,7 @@ export function handle(
 	state: StateInterface,
 	action: ActionInterface
 ): {state: StateInterface} | {result: ResultType} {
+	// Proxy used for all input validation
 	const input = new Proxy(action.input, InputHandler);
 	switch (input.function) {
 		case GetFunctions.unexecuted:

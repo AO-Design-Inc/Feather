@@ -8,9 +8,11 @@
 		"outDir": "built",
 		"sourceMap": true,
 		"removeComments": true,
-		"lib": ["es2020"]
+		"lib": ["es2020"],
+		"resolveJsonModule": true,
+		"esModuleInterop": true
 	},
 
-	"include": ["src/**/*"],
+	"include": ["src/**/**/*"],
 	"exclude": ["node_modules", "**/*.spec.ts"]
 }

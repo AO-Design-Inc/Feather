@@ -1,23 +1,23 @@
-import {ArweaveAddress, InputType, SetFunctionInput} from './interfaces';
 import {
 	ExecutableType,
-	CheckedExecutable,
 	ExecutableInterface,
 	ProposedExecutable,
-	CheckingExecutable,
-	ExecutableKinds
-} from './set-functions-interfaces';
+	ProposedExecutableInput,
+	AcceptedExecutable
+} from './exec-faces';
+import {ArweaveAddress} from '../interfaces';
 
 declare const ContractError: any;
-
 export const isArweaveAddress = (addy: string): addy is ArweaveAddress =>
 	/[\w-]{43}/i.test(addy);
-export const isCheckingExecutable = (
-	target: ExecutableType
-): target is CheckingExecutable => 'checked' in target && !target.checked;
-export const isProposedExecutable = (target: ExecutableType):
+export const isProposedExecutableInput = (
+	target: InputType 
+): target is ProposedExecutableInput => 
+	
+	
+export const isAcceptedExecutable = (target: ExecutableType):
 	target is ProposedExecutable =>
-	'result_address' in target;
+	'result' in target;
 export const isCheckedExecutable = (target: ExecutableType):
 	target is CheckedExecutable =>
 	'checked' in target && target.checked;
@@ -118,4 +118,4 @@ export const InputHandler: ProxyHandler<InputType> = {
 			}
 		}
 	}
-};
+}
