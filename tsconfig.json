@@ -1,16 +1,9 @@
 {
-	"extends": "@tsconfig/node12/tsconfig.json",
-
 	"compilerOptions": {
-		"module": "commonjs",
-		"target": "es6",
-		"preserveConstEnums": true,
+		"esModuleInterop": true,
 		"outDir": "built",
-		"sourceMap": true,
-		"removeComments": true,
-		"lib": ["es2020"],
-		"resolveJsonModule": true,
-		"esModuleInterop": true
+		"downlevelIteration": true,
+		"lib": ["es6"]
 	},
 
 	"include": ["src/**/**/*"],

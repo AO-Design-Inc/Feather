@@ -58,7 +58,7 @@ export class Account {
 
 	remove_vault(amount: number): {deduct_balance: () => void} {
 		const amounts_array = this.value.vaults.map(item => item.amount);
-		if (!(amount in amounts_array)) {
+		if (!(amounts_array.includes(amount))) {
 			throw new ContractError(`no vault of quantity ${amount}`);
 		}
 

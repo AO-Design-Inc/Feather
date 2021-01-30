@@ -1,0 +1,11 @@
+{
+	"accounts": {
+		"initializer": {
+			"balance": 1000,
+			"vaults": []
+		}
+	},
+	"executables": {},
+	"ticker": "FEA"
+}
+

@@ -2,11 +2,9 @@ import {ExecutableState, ProposedExecutable} from './executable';
 import {SetFunctions, GetFunctions, ExecutableKinds, ProposedExecutableInput} from './interfaces';
 import {StateInterface, ActionInterface, ContractHandlerOutput, handle} from './contract';
 
-export const smartWeave: any = {
-	block: {
-		height: 32333
-	}
-};
+const isStateResult = (handler_out: ContractHandlerOutput):
+	handler_out is { state: StateInterface } =>
+	'state' in handler_out;
 
 eval(`global.SmartWeave = {
      block: {
@@ -39,9 +37,13 @@ const prop_exec_action: ActionInterface = {
 	caller: 'sdlkfnskl'
 };
 
-
 let newState = handle(init_state, prop_exec_action);
-
+console.log(newState);
+if (isStateResult(newState)) {
+	inp.executable_key = 'BNtczDav3jHVnNiV7nYbQv-GY0HQ-4XXsdkE5K9ylhQ';
+	console.log(Object.keys(newState.state.executables));
+	newState = handle(newState.state, prop_exec_action);
+}
 
 console.log(newState);
 
@@ -51,11 +53,6 @@ const get_prop_action: ActionInterface = {
 	},
 	caller: 'sfasdfs'
 };
-
-export const isStateResult = (handler_out: ContractHandlerOutput):
-	handler_out is { state: StateInterface } =>
-	'state' in handler_out;
-
 
 if (isStateResult(newState)) {
 	newState = handle(newState.state, get_prop_action);

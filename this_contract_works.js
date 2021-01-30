@@ -254,7 +254,7 @@ var isAcceptedExecutable = (target) => !("result" in target) && "accepted_bid" i
 var isResultExecutable = (target) => !isProposedExecutable(target) && !isAcceptedExecutable(target);
 
 // src/contract.ts
-function handle(state, action) {
+export function handle(state, action) {
   const blockHeight = SmartWeave.block.height;
   switch (action.input.function) {
     case "propose": {
@@ -365,6 +365,3 @@ function handle(state, action) {
       throw new ContractError("Invalid function call");
   }
 }
-export {
-  handle
-};

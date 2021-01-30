@@ -14,7 +14,7 @@ import {
 	ResultInput,
 	ResultInputProxy,
 	ValidationInput,
-	ValidationInputProxy, SetFunctions, GetFunctions,
+	ValidationInputProxy
 } from './interfaces';
 import {
 	ExecutableStates,
@@ -83,7 +83,9 @@ export function handle(
 					executable_kind: inputProxy.executable_kind
 				}
 			});
-			if (inputProxy.executable_key in Object.keys(state.executables)) {
+			if (Object.keys(state.executables).includes(
+				inputProxy.executable_key
+			)) {
 				throw new ContractError(
 					`the executable key 
 					${String(inputProxy.executable_key)}
