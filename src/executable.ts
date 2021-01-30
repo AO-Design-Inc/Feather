@@ -5,8 +5,7 @@ import {
 	BidInterface,
 	AcceptedBidInput,
 	ResultInput,
-	ValidationInput,
-	VaultInterface
+	ValidationInput
 } from './interfaces';
 declare const ContractError: any;
 
@@ -58,13 +57,6 @@ export type ExecutableStates =
 	| AcceptedExecutable
 	| ResultExecutable
 	| ValidatedExecutable;
-
-const acceptedInputProxy: ProxyHandler<AcceptedBidInput> = {
-	get(target: AcceptedBidInput, key: keyof AcceptedBidInput) {
-		return target[key];
-	}
-};
-
 
 type InputApplier<T1 extends ExecutableStates, T2 extends ExecutableStates> = (
 	_: T1

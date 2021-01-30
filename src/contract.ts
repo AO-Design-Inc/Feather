@@ -3,7 +3,6 @@ declare const SmartWeave: any;
 import {balanceHandler, Account} from './transaction';
 import {
 	ArweaveAddress,
-	VaultInterface,
 	AccountInterface,
 	InputType,
 	ProposedExecutableInputProxy,
@@ -15,7 +14,7 @@ import {
 	ResultInput,
 	ResultInputProxy,
 	ValidationInput,
-	ValidationInputProxy
+	ValidationInputProxy, SetFunctions, GetFunctions,
 } from './interfaces';
 import {
 	ExecutableStates,
@@ -37,22 +36,20 @@ import {
  * selected executor then uploads result
  * user then validates result or objects to it
  */
-interface ActionInterface {
+export interface ActionInterface {
 	input: InputType;
 	caller: ArweaveAddress;
 }
 
-interface StateInterface {
+export interface StateInterface {
 	executables: Record<ArweaveAddress, ExecutableStates>;
-	balances: Record<ArweaveAddress, number>;
-	vault: Record<ArweaveAddress, VaultInterface[]>;
 	accounts: Record<ArweaveAddress, AccountInterface>;
 	ticker: 'FEA';
 }
 
 type ResultInterface = any;
 
-type ContractHandlerOutput =
+export type ContractHandlerOutput =
 	| {state: StateInterface}
 	| {result: ResultInterface};
 
@@ -69,7 +66,7 @@ const getVaultBalanceKeyValue = (
 export function handle(
 	state: StateInterface,
 	action: ActionInterface
-): ContractHandlerOutput | Promise<ContractHandlerOutput> {
+): ContractHandlerOutput {
 	const blockHeight: number = SmartWeave.block.height;
 	switch (action.input.function) {
 		case 'propose': {
@@ -107,6 +104,8 @@ export function handle(
 					bidder: action.caller,
 					quantity: inputProxy.quantity
 				});
+
+				return {state};
 			}
 
 			throw new ContractError(`Referred executable 
