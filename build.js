@@ -1,6 +1,4 @@
-const { build } = require('esbuild');
-const glob = require('glob');
-const fs = require('fs');
+const {build} = require('esbuild');
 
 build({
 	entryPoints: ['./src/contract.ts'],
