@@ -1,3 +1,8 @@
+/**
+ * {@link Account} defined here, used for validation of accounts in the
+ * contract via its constructor.
+ * @packageDocumentation
+ */
 import {
 	VaultInterface,
 	AccountInterface,

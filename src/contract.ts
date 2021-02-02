@@ -1,3 +1,8 @@
+/**
+ * Main contract file, entry point for bundling.
+ * Defines {@link handle}, as required by smartweave.
+ * @packageDocumentation
+ */
 declare const ContractError: any;
 declare const SmartWeave: any;
 import {balanceHandler, Account} from './transaction';

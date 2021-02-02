@@ -1,3 +1,7 @@
+/**
+ * {@link ExecutableState} class declared here
+ * @packageDocumentation
+ */
 declare const SmartWeave: any;
 import {
 	ExecutableKinds,

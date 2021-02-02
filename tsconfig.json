@@ -7,7 +7,8 @@
 	},
 	"typedocOptions": {
 		"entryPoints": "src",
-		"out": "docs"
+		"out": "docs",
+		"name": "Feather"
 	},
 	"include": ["src/**/**/*"],
 	"exclude": ["node_modules", "**/*.spec.ts"]
