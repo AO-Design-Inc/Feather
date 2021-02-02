@@ -72,7 +72,7 @@ const getVaultBalanceKeyValue = (
  * new state or a result (for now just list of pending proposed executables).
  * Uses Proxy for inputs to conduct first level typechecking.
  * Then, the ExecutableState class is used to enforce further rules.
- * The Account class, along with a singly vaulted architecture.
+ * The Account class implements escrow functionality and safe transactions.
  *
  * @param  state - Present state of smart contract.
  * @param  action - The contract interaction.
