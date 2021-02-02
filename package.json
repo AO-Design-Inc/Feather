@@ -4,9 +4,10 @@
 		"build-ts": "node build.js"
 	},
 	"devDependencies": {
+		"esbuild": "^0.8.37",
 		"prettier": "2.2.1",
-		"xo": "^0.36.1",
-		"esbuild": "^0.8.37"
+		"typedoc": "^0.20.20",
+		"xo": "^0.36.1"
 	},
 	"xo": {
 		"prettier": true

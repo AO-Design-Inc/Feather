@@ -5,7 +5,10 @@
 		"downlevelIteration": true,
 		"lib": ["es6"]
 	},
-
+	"typedocOptions": {
+		"entryPoints": "src",
+		"out": "docs"
+	},
 	"include": ["src/**/**/*"],
 	"exclude": ["node_modules", "**/*.spec.ts"]
 }

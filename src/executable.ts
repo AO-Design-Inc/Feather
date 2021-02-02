@@ -7,15 +7,41 @@ import {
 	ResultInput,
 	ValidationInput
 } from './interfaces';
-declare const ContractError: any;
 
+/**
+ * ExecutableState is a class that wraps the executable state, the only way to
+ * go from one executable state to the next is to call the next method on the
+ * ExecutableState class with a function that takes the wrapped executable
+ * state and returns the next executable state.
+ *
+ * Ideally this class would be stronger, and its constructor would be able to
+ * do the instanceof typechecking for what kind of Executable it is. This is
+ * currently in progress, however the author has not yet been able to find an
+ * elegant solution for the same.
+ */
 export class ExecutableState<T extends ExecutableStates> {
 	public readonly value: T;
 
+	/** Should have typechecking for instanceof T, but this is awkward in
+	* typescript because they're implemented as interfaces, so can't do
+	* that at runtime, might want to have if-else typeguard chain ie:
+	* ```typescript
+	* 	if (isProposedExecutable(value)) {
+	* 		this.value: ProposedExecutable = value;
+	* 	} else if (isAcceptedExecutable(value)) {
+	* 		this.value: AcceptedExecutable = value;
+	* ```
+	*/
 	constructor(value: T) {
 		this.value = value;
 	}
 
+	/**
+	 * @param  f - function that takes in an instance of one of the
+	 * @link{ExecutableStates} interfaces, and returns an ExecutableState
+	 * class.
+	 * @returns f applied to wrapped state.
+	 */
 	next<T1 extends ExecutableStates>(
 		f: (v: T) => ExecutableState<T1>
 	): ExecutableState<T1> {
