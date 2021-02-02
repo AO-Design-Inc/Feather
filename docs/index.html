@@ -63,25 +63,20 @@
 				</a>
 				<p>The Feather Contract provides a mechanism to connect wasm executor nodes to
 				clients and stores code on the arweave blockchain.</p>
-				<p>Fidelity is guaranteed via randomly sampled redundancy, which is incentivized
+				<p>Fidelity is <strong><em>planned to be</em></strong> guaranteed via randomly sampled redundancy, incentivized
 				via a staking mechanism.</p>
-				<p>The Feather token is used for staking</p>
-				<a href="#economics" id="economics" style="color: inherit; text-decoration: none;">
-					<h1>Economics</h1>
+				<a href="#system" id="system" style="color: inherit; text-decoration: none;">
+					<h1>System</h1>
 				</a>
-				<p>Broadcasters put up a Proposed Contract with x AR.</p>
-				<p>Executors put up a Checking Contract with x FEA.</p>
-				<p>After 1000 blocks, 0.9x AR transferred to executor and 1.1x FEA transferred to
-				executor. Contract turned into Checked Contract.</p>
-				<p>If Angler agrees during checking contract phase, they can sign the contract,
-				and must stake same amount as $CURRENTPOT.</p>
-				<p>When contract turned into Checked Contract, Angler gets back 1.1x times their
-				stake.</p>
-				<p>If Angler disputes during checking contract phase, another checking contract
-				spawned with <code>$CURRENTPOT</code> FEA, and BOTH CLOCKS RESET.</p>
-				<p>At the end of 1000 blocks, the contract with larger pot is accepted and turned
-					into checked contract. the other contract is voided, and all the FEA in it is
-				nullified.</p>
+				<p>The contract in this repository enables users to propose executables for
+					running on the Feather network, these are then bid on by executors. Within x
+					blocks of inception, a bid must be accepted by the proposer, failing which the
+				proposed executable expires. </p>
+				<p>When a bid is accepted, funds are moved into escrow from the proposer&#39;s wallet.
+					Then, the result is posted by the winning bidder, at which point the money is
+					moved into the winner&#39;s wallet. This entire process takes a minimum off at
+					least 20 minutes, which means that any practical application of feather would
+				require an optimistic broadcaster-executor system. </p>
 			</div>
 		</div>
 		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
