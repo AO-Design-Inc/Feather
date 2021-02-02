@@ -3,29 +3,18 @@
 The Feather Contract provides a mechanism to connect wasm executor nodes to
 clients and stores code on the arweave blockchain.
 
-Fidelity is guaranteed via randomly sampled redundancy, which is incentivized
+Fidelity is ***planned to be*** guaranteed via randomly sampled redundancy, incentivized
 via a staking mechanism.
 
-The Feather token is used for staking
+# System
 
-# Economics
+The contract in this repository enables users to propose executables for
+running on the Feather network, these are then bid on by executors. Within x
+blocks of inception, a bid must be accepted by the proposer, failing which the
+proposed executable expires. 
 
-Broadcasters put up a Proposed Contract with x AR.
-
-Executors put up a Checking Contract with x FEA.
-
-After 1000 blocks, 0.9x AR transferred to executor and 1.1x FEA transferred to
-executor. Contract turned into Checked Contract.
-
-If Angler agrees during checking contract phase, they can sign the contract,
-and must stake same amount as $CURRENTPOT.
-
-When contract turned into Checked Contract, Angler gets back 1.1x times their
-stake.
-
-If Angler disputes during checking contract phase, another checking contract
-spawned with `$CURRENTPOT` FEA, and BOTH CLOCKS RESET.
-
-At the end of 1000 blocks, the contract with larger pot is accepted and turned
-into checked contract. the other contract is voided, and all the FEA in it is
-nullified.
+When a bid is accepted, funds are moved into escrow from the proposer's wallet.
+Then, the result is posted by the winning bidder, at which point the money is
+moved into the winner's wallet. This entire process takes a minimum off at
+least 20 minutes, which means that any practical application of feather would
+require an optimistic broadcaster-executor system. 
