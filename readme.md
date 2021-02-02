@@ -3,8 +3,8 @@
 The Feather Contract provides a mechanism to connect wasm executor nodes to
 clients and stores code on the arweave blockchain.
 
-Fidelity is ***planned to be*** guaranteed via randomly sampled redundancy, incentivized
-via a staking mechanism.
+To guarantee correct execution, implementation of randomly sampled redundancy 
+is ***planned***. This will be incentivized via a staking mechanism.
 
 # System
 
