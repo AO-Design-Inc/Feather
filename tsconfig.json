@@ -3,7 +3,8 @@
 		"esModuleInterop": true,
 		"outDir": "built",
 		"downlevelIteration": true,
-		"lib": ["es6"]
+		"lib": ["es6"],
+		"target": "es6"
 	},
 	"typedocOptions": {
 		"entryPoints": "src",

@@ -5,7 +5,7 @@
  */
 declare const ContractError: any;
 declare const SmartWeave: any;
-import {balanceHandler, Account} from './transaction';
+import {Account} from './transaction';
 import {
 	ArweaveAddress,
 	AccountInterface,
@@ -107,9 +107,7 @@ export function handle(
 					executable_kind: inputProxy.executable_kind
 				}
 			});
-			if (Object.keys(state.executables).includes(
-				inputProxy.executable_key
-			)) {
+			if (Object.keys(state.executables).includes(inputProxy.executable_key)) {
 				throw new ContractError(
 					`the executable key 
 					${String(inputProxy.executable_key)}
@@ -202,14 +200,14 @@ export function handle(
 				acceptedToResult(inputProxy, action.caller)
 			);
 
-			let result_giver_account = new Account(state.accounts, action.caller);
-			let accepter_account = new Account(state.accounts, ref_exec.caller);
+			const result_giver_account = new Account(state.accounts, action.caller);
+			const accepter_account = new Account(state.accounts, ref_exec.caller);
 			// Function balanceHandler takes two accounts and
 			// transfers money, all transactions handled through
 			// this function so money doesn't get vanished anywhere
-			[accepter_account, result_giver_account] = balanceHandler(
+
+			result_giver_account.increase_balance(
 				accepter_account,
-				result_giver_account,
 				ref_exec.accepted_bid.quantity
 			);
 
