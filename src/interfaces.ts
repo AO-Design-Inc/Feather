@@ -1,5 +1,22 @@
 declare const ContractError: any;
 
+export interface ActionInterface {
+	input: InputType;
+	caller: ArweaveAddress;
+}
+
+export interface StateInterface {
+	executables: Record<ArweaveAddress, ExecutableStates>;
+	accounts: Record<ArweaveAddress, AccountInterface>;
+	ticker: 'FEA';
+}
+
+export type ResultInterface = any;
+
+export type ContractHandlerOutput =
+	| {state: StateInterface}
+	| {result: ResultInterface};
+
 export enum GetFunctions {
 	proposed = 'proposed',
 

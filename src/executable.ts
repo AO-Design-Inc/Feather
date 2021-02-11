@@ -3,6 +3,7 @@
  * @packageDocumentation
  */
 declare const SmartWeave: any;
+declare const ContractError: any;
 import {
 	ExecutableKinds,
 	ArweaveAddress,
@@ -22,6 +23,9 @@ import {
  * do the instanceof typechecking for what kind of Executable it is. This is
  * currently in progress, however the author has not yet been able to find an
  * elegant solution for the same.
+ *
+ * TODO: add input option to executable, so user can link pre-existing programs
+ * on arweave.
  */
 export class ExecutableState<T extends ExecutableStates> {
 	public readonly value: T;
@@ -96,10 +100,15 @@ export function proposedToAccepted(
 	acc_input: AcceptedBidInput
 ): InputApplier<ProposedExecutable, AcceptedExecutable> {
 	return (i: ProposedExecutable): ExecutableState<AcceptedExecutable> => {
-		return new ExecutableState<AcceptedExecutable>({
-			...i,
-			accepted_bid: acc_input.accepted_bid
-		});
+		if (isProposedExecutable(i)) {
+			return new ExecutableState<AcceptedExecutable>({
+				...i,
+				accepted_bid: acc_input.accepted_bid
+			});
+		}
+
+		throw new ContractError(`referred executable 
+				not in proposed state`);
 	};
 }
 
@@ -108,14 +117,18 @@ export function acceptedToResult(
 	caller: ArweaveAddress
 ): InputApplier<AcceptedExecutable, ResultExecutable> {
 	return (i: AcceptedExecutable): ExecutableState<ResultExecutable> => {
-		return new ExecutableState<ResultExecutable>({
-			...i,
-			result: {
-				address: result_input.result_address,
-				giver: caller,
-				height: SmartWeave.block.height
-			}
-		});
+		if (isAcceptedExecutable(i)) {
+			return new ExecutableState<ResultExecutable>({
+				...i,
+				result: {
+					address: result_input.result_address,
+					giver: caller,
+					height: SmartWeave.block.height
+				}
+			});
+		}
+
+		throw new ContractError('Executable not in accepted state');
 	};
 }
 
@@ -123,10 +136,14 @@ export function resultToValidated(
 	validation_input: ValidationInput
 ): InputApplier<ResultExecutable, ValidatedExecutable> {
 	return (i: ResultExecutable): ExecutableState<ValidatedExecutable> => {
-		return new ExecutableState<ValidatedExecutable>({
-			...i,
-			is_correct: validation_input.is_correct
-		});
+		if (isResultExecutable(i)) {
+			return new ExecutableState<ValidatedExecutable>({
+				...i,
+				is_correct: validation_input.is_correct
+			});
+		}
+
+		throw new ContractError('Executable not in result state');
 	};
 }
 

@@ -19,7 +19,10 @@ import {
 	ResultInput,
 	ResultInputProxy,
 	ValidationInput,
-	ValidationInputProxy
+	ValidationInputProxy,
+	ActionInterface,
+	StateInterface,
+	ContractHandlerOutput
 } from './interfaces';
 import {
 	ExecutableStates,
@@ -40,23 +43,6 @@ import {
  * selected executor then uploads result
  * user then validates result or objects to it
  */
-export interface ActionInterface {
-	input: InputType;
-	caller: ArweaveAddress;
-}
-
-export interface StateInterface {
-	executables: Record<ArweaveAddress, ExecutableStates>;
-	accounts: Record<ArweaveAddress, AccountInterface>;
-	ticker: 'FEA';
-}
-
-type ResultInterface = any;
-
-export type ContractHandlerOutput =
-	| {state: StateInterface}
-	| {result: ResultInterface};
-
 /* Terrible
 const getVaultBalanceKeyValue = (
 	state: StateInterface
@@ -147,11 +133,6 @@ export function handle(
 			);
 			const ref_exec: ExecutableStates =
 				state.executables[inputProxy.executable_key];
-			if (!isProposedExecutable(ref_exec)) {
-				throw new ContractError(`referred executable 
-					${inputProxy.executable_key}
-					not in proposed state`);
-			}
 
 			if (ref_exec.caller !== action.caller) {
 				throw new ContractError(`${action.caller}
@@ -184,11 +165,6 @@ export function handle(
 			const inputProxy: ResultInput = new Proxy(action.input, ResultInputProxy);
 			const ref_exec: ExecutableStates =
 				state.executables[inputProxy.executable_key];
-			if (!isAcceptedExecutable(ref_exec)) {
-				throw new ContractError(`referred executable 
-					${inputProxy.executable_key}
-					not in accepted state`);
-			}
 
 			if (ref_exec.accepted_bid.bidder !== action.caller) {
 				throw new ContractError(`result not made by
@@ -229,11 +205,6 @@ export function handle(
 
 			const ref_exec: ExecutableStates =
 				state.executables[inputProxy.executable_key];
-			if (!isResultExecutable(ref_exec)) {
-				throw new ContractError(`referred executable
-					${inputProxy.executable_key}
-					not in result state`);
-			}
 
 			if (ref_exec.caller !== action.caller) {
 				throw new ContractError(`referred executable

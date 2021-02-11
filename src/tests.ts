@@ -1,6 +1,14 @@
 import {ExecutableState, ProposedExecutable} from './executable';
-import {SetFunctions, GetFunctions, ExecutableKinds, ProposedExecutableInput} from './interfaces';
-import {StateInterface, ActionInterface, ContractHandlerOutput, handle} from './contract';
+import {
+	SetFunctions,
+	GetFunctions,
+	ExecutableKinds,
+	ProposedExecutableInput,
+	StateInterface,
+	ActionInterface,
+	ContractHandlerOutput
+} from './interfaces';
+import {handle} from './contract';
 
 const isStateResult = (handler_out: ContractHandlerOutput):
 	handler_out is { state: StateInterface } =>
