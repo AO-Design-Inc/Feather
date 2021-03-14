@@ -12,6 +12,26 @@ import {
 declare const ContractError: any;
 declare const SmartWeave: any;
 
+function configurable(value: boolean) {
+	return function (
+		target: any,
+		propertyKey: string,
+		descriptor: PropertyDescriptor
+	) {
+		descriptor.configurable = value;
+	};
+}
+
+function writable(value: boolean) {
+	return function (
+		target: any,
+		propertyKey: string,
+		descriptor: PropertyDescriptor
+	) {
+		descriptor.writable = value;
+	};
+}
+
 // MAKE THE VAULTS A CLASS, WITH GETTER THAT CHECKS VALIDITY! THAT'LL CLEAN
 // EVERYTHING UP SO MUCH
 /** So a transaction has two states
@@ -58,8 +78,21 @@ export class Account {
 					vault.end >= SmartWeave.block.height &&
 					vault.start <= SmartWeave.block.height
 			)
-			.reduce((acc: number, cur) => acc - cur.amount, this.value.balance);
+			.reduce((acc: number, cur) =>
+				acc - cur.amount, this.value.balance);
 		/* eslint-enable unicorn/no-reduce */
+	}
+
+	consume() {
+		// Possibly make this a decorator in the future.
+		Object.freeze(this);
+		return this.value;
+	}
+
+	@configurable(false)
+	@writable(false)
+	get _value() {
+		return this.value;
 	}
 
 	/**

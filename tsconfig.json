@@ -3,8 +3,12 @@
 		"esModuleInterop": true,
 		"outDir": "built",
 		"downlevelIteration": true,
-		"lib": ["es6"],
-		"target": "es6"
+		"experimentalDecorators": true,
+		"lib": ["es2019"],
+		"target": "es6",
+		"strict": true,
+		"alwaysStrict": true,
+		"strictNullChecks": true
 	},
 	"typedocOptions": {
 		"entryPoints": "src",

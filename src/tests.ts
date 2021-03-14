@@ -35,7 +35,6 @@ const init_state: StateInterface = {
 
 const inp: ProposedExecutableInput = {
 	executable_address: 'BNttzDav3jHVnNiV7nYbQv-GY0HQ-4XXsdkE5K9ylHQ',
-	executable_key: 'BNttzDav3jHVnNiV7nYbQv-GY0HQ-4XXsdkE5K9ylhQ',
 	executable_kind: ExecutableKinds.wasm,
 	function: SetFunctions.propose
 };

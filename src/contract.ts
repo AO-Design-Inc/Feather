@@ -6,6 +6,11 @@
 declare const ContractError: any;
 declare const SmartWeave: any;
 import {Account} from './transaction';
+import * as crypto from 'crypto';
+declare const ContractAssert: <T extends boolean>(
+	cond: T,
+	message: string
+) => T extends true ? string : never;
 import {
 	ArweaveAddress,
 	AccountInterface,
@@ -18,22 +23,48 @@ import {
 	AcceptedBidInputProxy,
 	ResultInput,
 	ResultInputProxy,
-	ValidationInput,
-	ValidationInputProxy,
+	ValidationLockInput,
+	ValidationLockInputProxy,
+	ValidationReleaseInput,
+	ValidationReleaseInputProxy,
 	ActionInterface,
 	StateInterface,
 	ContractHandlerOutput
 } from './interfaces';
 import {
 	ExecutableStates,
+	ProposedExecutable,
+	AcceptedExecutable,
 	isProposedExecutable,
 	isAcceptedExecutable,
 	isResultExecutable,
-	ExecutableState,
+	ProposedState,
+	AcceptedState,
+	ResultState,
+	ValidatedState,
+	ValidationStates,
 	proposedToAccepted,
 	acceptedToResult,
-	resultToValidated
+	decipherList
 } from './executable';
+import {
+	ValidationAnnounceState,
+	ValidationLockState,
+	ValidationReleaseState,
+	validationAnnouncedToLocked,
+	validationLockedToReleased
+} from './validate';
+import {lastElement, Tuple} from './utils';
+
+function getValidators(
+	state: StateInterface
+): Record<ArweaveAddress, Required<AccountInterface>> {
+	return Object.fromEntries(
+		Object.entries(state.accounts).filter(
+			(value) => typeof value[1].stake !== 'undefined'
+		)
+	) as Record<ArweaveAddress, Required<AccountInterface>>;
+}
 
 /*
  * A user proposes a function using SetFunctions.propose,
@@ -84,7 +115,8 @@ export function handle(
 			 * {@link ExecutableState} documentation for further
 			 * clarification.
 			 */
-			const proposed_exec = new ExecutableState({
+			const proposed_exec = new ProposedState({
+				_discriminator: 'proposed',
 				bids: [],
 				caller: action.caller,
 				executable: {
@@ -93,35 +125,33 @@ export function handle(
 					executable_kind: inputProxy.executable_kind
 				}
 			});
-			if (Object.keys(state.executables).includes(inputProxy.executable_key)) {
-				throw new ContractError(
-					`the executable key 
-					${String(inputProxy.executable_key)}
-					already exists`
-				);
-			} else {
-				state.executables[inputProxy.executable_key] = proposed_exec.value;
-			}
 
+			state.executables[SmartWeave.transaction.id] =
+				proposed_exec.value;
+
+			/** There should be a hash func from blockheight
+			 * and input hash to give exec key, don't make user pass it
+			 * bruh just take the transaction id, you idiot.
+			 */
 			return {state};
 		}
 
 		// Process a bid on an executable.
 		case 'bid': {
-			const inputProxy: BidInput = new Proxy(action.input, BidInputProxy);
-			const ref_exec = state.executables[inputProxy.executable_key];
-			if (isProposedExecutable(ref_exec)) {
-				ref_exec.bids.push({
-					bidder: action.caller,
-					quantity: inputProxy.quantity
-				});
+			const inputProxy: BidInput = new Proxy(
+				action.input,
+				BidInputProxy
+			);
+			const ref_exec = new ProposedState(
+				state.executables[inputProxy.executable_key]
+			);
+			ref_exec.value.bids.push({
+				bidder: action.caller,
+				quantity: inputProxy.quantity
+			});
 
-				return {state};
-			}
-
-			throw new ContractError(`Referred executable 
-				${String(inputProxy.executable_key)}
-				is not in proposed state`);
+			state.executables[inputProxy.executable_key] = ref_exec.value;
+			return {state};
 		}
 
 		// Lets user who proposed executable accept a bid on an
@@ -131,93 +161,173 @@ export function handle(
 				action.input,
 				AcceptedBidInputProxy
 			);
-			const ref_exec: ExecutableStates =
-				state.executables[inputProxy.executable_key];
+			const ref_exec = state.executables[inputProxy.executable_key];
 
-			if (ref_exec.caller !== action.caller) {
-				throw new ContractError(`${action.caller}
-					is not creator of proposal`);
-			}
+			ContractAssert(
+				ref_exec.caller === action.caller,
+				`${action.caller} is not creator of proposal`
+			);
 
-			const proposed_exec = new ExecutableState(ref_exec);
-			const accepted_exec = proposed_exec.next(proposedToAccepted(inputProxy));
+			const proposed_exec = new ProposedState(ref_exec);
+			const accepted_exec = proposed_exec.next(
+				proposedToAccepted(inputProxy)
+			);
 
-			/** {@link Account | Account class} used to safely encapsulate all
+			/** {@link Account | Account class} used to
+			 * safely encapsulate all
 			 * transaction methods and ideas. Read the
 			 * documentation of the Account class for further
 			 * clarification.
 			 */
-			const accepter_account = new Account(state.accounts, ref_exec.caller);
+			const accepter_account = new Account(
+				state.accounts,
+				ref_exec.caller
+			);
 			accepter_account.add_vault({
 				amount: inputProxy.accepted_bid.quantity,
 				start: blockHeight,
 				end: blockHeight + 1000
 			});
 
-			state.executables[inputProxy.executable_key] = accepted_exec.value;
+			state.executables[inputProxy.executable_key] =
+				accepted_exec.value;
 			state.accounts[ref_exec.caller] = accepter_account.value;
 			return {state};
 		}
 
 		// Adds result to AcceptedExecutable from winning bidder,
 		// pays out money to them.
+		// also sends stuff to validation part of contract.
 		case 'result': {
-			const inputProxy: ResultInput = new Proxy(action.input, ResultInputProxy);
-			const ref_exec: ExecutableStates =
-				state.executables[inputProxy.executable_key];
+			const inputProxy: ResultInput = new Proxy(
+				action.input,
+				ResultInputProxy
+			);
+			const ref_exec = state.executables[inputProxy.executable_key];
 
-			if (ref_exec.accepted_bid.bidder !== action.caller) {
-				throw new ContractError(`result not made by
-							winning bidder`);
-			}
+			// This right here is a code smell, I should probably
+			// make the monad bois just take present state and
+			// input so I dont have to do this weird dance
+			const accepted_exec = new AcceptedState(ref_exec);
 
-			const accepted_exec = new ExecutableState(ref_exec);
-			const result_exec = accepted_exec.next(
-				acceptedToResult(inputProxy, action.caller)
+			ContractAssert(
+				accepted_exec.accepted_bid.bidder === action.caller,
+				'result not made by winning bidder!'
 			);
 
-			const result_giver_account = new Account(state.accounts, action.caller);
-			const accepter_account = new Account(state.accounts, ref_exec.caller);
-			// Function balanceHandler takes two accounts and
-			// transfers money, all transactions handled through
-			// this function so money doesn't get vanished anywhere
+			const validators = getValidators(state);
+
+			const result_exec = accepted_exec.next(
+				acceptedToResult(inputProxy, action.caller, validators)
+			);
+
+			const result_giver_account = new Account(
+				state.accounts,
+				action.caller
+			);
+			const accepter_account = new Account(
+				state.accounts,
+				ref_exec.caller
+			);
 
 			result_giver_account.increase_balance(
 				accepter_account,
-				ref_exec.accepted_bid.quantity
+				accepted_exec.accepted_bid.quantity
 			);
 
-			state.accounts[ref_exec.caller] = accepter_account.value;
-			state.accounts[action.caller] = result_giver_account.value;
-			state.executables[inputProxy.executable_key] = result_exec.value;
+			// Validate!
+			// Wait... There is no result executable, it IS the
+			// validating executable.
+
+			state.accounts[ref_exec.caller] = accepter_account.consume();
+			state.accounts[action.caller] = result_giver_account.consume();
+			state.executables[
+				inputProxy.executable_key
+			] = result_exec.consume();
 			return {state};
 		}
 
-		// Currently @alpha, user who proposed executable can indicate
-		// satisfaction with output, in future a verification contract
-		// may be used for this purpose or maybe something else, we
-		// shall see.
-		case 'validate': {
-			const inputProxy: ValidationInput = new Proxy(
+		case 'validate_lock': {
+			const inputProxy: ValidationLockInput = new Proxy(
 				action.input,
-				ValidationInputProxy
+				ValidationLockInputProxy
+			);
+			const ref_exec = state.executables[inputProxy.executable_key];
+			const result_exec = new ResultState(ref_exec);
+
+			// Check for correct validation in tree
+			// get apices of validation tree
+			// check if caller *in* them
+			// if so, take the lock.
+
+			// With Linked list we do this instead.
+
+			const matched_validation = result_exec.validations[-1].filter(
+				(value) =>
+					value.value.validator === action.caller &&
+					value.value._discriminator === 'announce'
+			) as Tuple<ValidationStates, 1>;
+
+			ContractAssert(
+				Boolean(matched_validation.length),
+				'no matching validation!'
 			);
 
-			const ref_exec: ExecutableStates =
-				state.executables[inputProxy.executable_key];
+			matched_validation[0] = new ValidationLockState(
+				(matched_validation[0] as ValidationAnnounceState).next(
+					validationAnnouncedToLocked(inputProxy)
+				).value
+			);
 
-			if (ref_exec.caller !== action.caller) {
-				throw new ContractError(`referred executable
-					${inputProxy.executable_key}
-					has caller ${ref_exec.caller}
-					not the same as current caller
-					${action.caller}`);
-			}
+			state.executables[
+				inputProxy.executable_key
+			] = result_exec.consume();
 
-			const result_exec = new ExecutableState(ref_exec);
-			const validated_exec = result_exec.next(resultToValidated(inputProxy));
+			return {state};
+		}
 
-			state.executables[inputProxy.executable_key] = validated_exec.value;
+		case 'validate_release': {
+			const inputProxy: ValidationReleaseInput = new Proxy(
+				action.input,
+				ValidationReleaseInputProxy
+			);
+
+			const ref_exec = state.executables[inputProxy.executable_key];
+			const result_exec = new ResultState(ref_exec);
+
+			if (
+				!result_exec.validations[-1].every(
+					(_) => _.value._discriminator === 'lock'
+				)
+			)
+				throw new ContractError('entire vll is not locked');
+
+			const matched_validation = result_exec.validations[-1].filter(
+				(value) =>
+					value.value.validator === action.caller &&
+					value.value._discriminator === 'announce'
+			) as Tuple<ValidationStates, 1>;
+
+			ContractAssert(
+				Boolean(matched_validation.length),
+				'no matching validation!'
+			);
+
+			matched_validation[0] = new ValidationReleaseState(
+				(matched_validation[0] as ValidationLockState).next(
+					validationLockedToReleased(inputProxy)
+				).value
+			);
+
+			const next_exec = result_exec.verify_and_iterate(
+				getValidators(state)
+			)
+
+			state.executables[
+				inputProxy.executable_key
+			] = next_exec.consume();
+
+
 			return {state};
 		}
 
@@ -225,7 +335,7 @@ export function handle(
 		// executors know what to bid on.
 		case 'proposed':
 			return {
-				result: Object.entries(state.executables).filter(keyval =>
+				result: Object.entries(state.executables).filter((keyval) =>
 					isProposedExecutable(keyval[1])
 				)
 			};

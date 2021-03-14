@@ -1,4 +1,9 @@
 declare const ContractError: any;
+declare const ContractAssert: <T extends boolean>(
+	cond: T,
+	message: string
+) => T extends true ? string : never;
+import {ExecutableStates, ProposedExecutable} from './executable';
 
 export interface ActionInterface {
 	input: InputType;
@@ -38,7 +43,11 @@ export enum SetFunctions {
 
 	result = 'result',
 
-	validate = 'validate'
+	validate = 'validate',
+
+	validate_lock = 'validate_lock',
+
+	validate_release = 'validate_release'
 }
 
 export enum AccountFunctions {
@@ -50,11 +59,13 @@ export enum AccountFunctions {
 export interface AccountInterface {
 	balance: number;
 	vaults: VaultInterface[];
+	stake?: number;
 }
 
 export type ArweaveAddress = string;
-export const isArweaveAddress = (addy: string): addy is ArweaveAddress =>
-	/[\w-]{43}/i.test(addy);
+export const isArweaveAddress = (
+	addy: string
+): addy is ArweaveAddress => /[\w-]{43}/i.test(addy);
 
 export interface VaultInterface {
 	amount: number;
@@ -70,11 +81,14 @@ export interface ProposedExecutableInput extends InputInterface {
 	executable_address: ArweaveAddress;
 	executable_kind: ExecutableKinds;
 	function: SetFunctions.propose;
-	executable_key: ArweaveAddress;
+	input_to_executable?: ArweaveAddress;
 }
 
 export const ProposedExecutableInputProxy: ProxyHandler<ProposedExecutableInput> = {
-	get(target: ProposedExecutableInput, p: keyof ProposedExecutableInput) {
+	get(
+		target: ProposedExecutableInput,
+		p: keyof ProposedExecutableInput
+	) {
 		switch (p) {
 			case 'executable_address':
 				if (isArweaveAddress(target.executable_address)) {
@@ -94,15 +108,6 @@ export const ProposedExecutableInputProxy: ProxyHandler<ProposedExecutableInput>
 					${target.executable_kind}
 					is not valid executable type
 					`);
-			case 'executable_key':
-				if (isArweaveAddress(target.executable_key)) {
-					return target.executable_key;
-				}
-
-				throw new ContractError(`
-					${String(target.executable_key)}
-					is not valid executable key
-					`);
 			default:
 				throw new ContractError(`
 					${String(p)} is invalid key
@@ -117,7 +122,9 @@ export interface BidInterface {
 }
 
 type ValidBid = number;
-export const isValidBid = (bid_amount: number): bid_amount is ValidBid =>
+export const isValidBid = (
+	bid_amount: number
+): bid_amount is ValidBid =>
 	typeof bid_amount === 'number' && bid_amount > 0;
 
 export interface BidInput extends InputInterface {
@@ -172,32 +179,23 @@ export const AcceptedBidInputProxy: ProxyHandler<AcceptedBidInput> = {
 	get(target: AcceptedBidInput, p: keyof AcceptedBidInput) {
 		switch (p) {
 			case 'accepted_bid':
-				if (!isValidBid(target.accepted_bid.quantity)) {
-					throw new ContractError(`
-						${String(target.accepted_bid.quantity)}
-						is invalid amount`);
-				}
-
-				if (!isArweaveAddress(target.accepted_bid.bidder)) {
-					throw new ContractError(`
-						${String(target.accepted_bid.bidder)}
-						is not Arweave Address`);
-				}
-
+				ContractAssert(
+					isValidBid(target.accepted_bid.quantity),
+					'invalid amount'
+				);
+				ContractAssert(
+					isArweaveAddress(target.accepted_bid.bidder),
+					'bad accepted bid bidder'
+				);
 				return target.accepted_bid;
 			case 'executable_key':
-				if (isArweaveAddress(target.executable_key)) {
-					return target.executable_key;
-				}
-
-				throw new ContractError(`
-					${String(target.executable_key)}
-					is not valid executable key
-					`);
+				ContractAssert(
+					isArweaveAddress(target.executable_key),
+					'not valid executable key'
+				);
+				return target.executable_key;
 			default:
-				throw new ContractError(`
-						${String(p)} is invalid key
-						`);
+				throw new ContractError('invalid key');
 		}
 	}
 };
@@ -236,38 +234,57 @@ export const ResultInputProxy: ProxyHandler<ResultInput> = {
 	}
 };
 
-export interface ValidationInput extends InputInterface {
-	function: SetFunctions.validate;
+// Make sure encrypted_hash actually is a hash
+export interface ValidationLockInput extends InputInterface {
+	function: SetFunctions.validate_lock;
 	executable_key: ArweaveAddress;
-	is_correct: boolean;
+	encrypted_hash: string;
 }
 
-export const ValidationInputProxy: ProxyHandler<ValidationInput> = {
-	get(target: ValidationInput, p: keyof ValidationInput) {
+export const ValidationLockInputProxy: ProxyHandler<ValidationLockInput> = {
+	get(target: ValidationLockInput, p: keyof ValidationLockInput) {
 		switch (p) {
-			case 'is_correct':
-				if (typeof target.is_correct === 'boolean') {
-					return target.is_correct;
-				}
-
-				throw new ContractError(`${String(target.is_correct)}
-					is not a boolean value`);
+			case 'encrypted_hash':
+				return target.encrypted_hash;
 			case 'executable_key':
-				if (isArweaveAddress(target.executable_key)) {
-					return target.executable_key;
-				}
-
-				throw new ContractError(`
-					${String(target.executable_key)}
-					is not valid executable key
-					`);
+				ContractAssert(
+					isArweaveAddress(target.executable_key),
+					'invalid executable key (not arweave address)'
+				);
+				return target.executable_key;
 			default:
-				throw new ContractError(`
-					${String(p)} is invalid key
-					`);
+				throw new ContractError('invalid key');
 		}
 	}
 };
+
+export interface ValidationReleaseInput extends InputInterface {
+	function: SetFunctions.validate_release;
+	executable_key: ArweaveAddress;
+	symm_key: string;
+}
+
+export const ValidationReleaseInputProxy: ProxyHandler<ValidationReleaseInput> = {
+	get(
+		target: ValidationReleaseInput,
+		p: keyof ValidationReleaseInput
+	) {
+		switch (p) {
+			case 'executable_key':
+				ContractAssert(
+					isArweaveAddress(target.executable_key),
+					'invalid executable key (not arweave address)'
+				);
+				return target.executable_key;
+			case 'symm_key':
+				return target.symm_key;
+			default:
+				throw new ContractError('invalid key');
+		}
+	}
+};
+
+// MAKE ABSOLUTELY SURE ONE EXECUTOR CAN'T GET CALLED TWICE SOMEHOW.
 
 export interface GetProposedExecutableInput extends InputInterface {
 	function: GetFunctions.proposed;
@@ -278,5 +295,6 @@ export type InputType =
 	| AcceptedBidInput
 	| ProposedExecutableInput
 	| ResultInput
-	| ValidationInput
+	| ValidationLockInput
+	| ValidationReleaseInput
 	| GetProposedExecutableInput;
