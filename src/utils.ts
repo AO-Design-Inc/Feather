@@ -7,18 +7,6 @@ export type Tuple<
 	A extends any[] = []
 > = A extends {length: N} ? A : Tuple<T, N, [...A, T]>;
 
-type Tree<T> = {
-	value: T;
-	left?: Tree<T>;
-	right?: Tree<T>;
-};
-
-function traverseTree(tree: Tree<any>, callback: Function): void {
-	const l = tree.left ? traverseTree(tree.left, callback) : null;
-	const r = tree.right ? traverseTree(tree.right, callback) : null;
-	callback(tree.value);
-}
-
 export type LinkedList<T> =
 	| {value: T; next: LinkedList<T>}
 	| {value: T; next: undefined};
@@ -61,16 +49,66 @@ export type ValidationLinkedList<
 	| {value: T; next: ValidationLinkedList}
 	| {value: T; next: undefined};
 
-export function isArrayOfDiscriminatedTypes<T extends {_discriminator: any}>(
+export function isArrayOfDiscriminatedTypes<
+	T extends {_discriminator: any}
+>(
 	target: any[],
 	discriminator: T extends {_discriminator: infer U} ? U : never
 ): target is T[] {
 	return target.every((_) => _._discriminator === discriminator);
 }
 
-export function isOfDiscriminatedType<T extends {_discriminator: any}>(
+export function isOfDiscriminatedType<
+	T extends {_discriminator: any}
+>(
 	target: any,
 	discriminator: T extends {_discriminator: infer U} ? U : never
 ): target is T {
 	return target._discriminator === discriminator;
+}
+
+export function setDifference<T>(setA: Set<T>, setB: Set<T>) {
+	const _difference = new Set(setA);
+	for (const element of setB) {
+		_difference.delete(element);
+	}
+
+	return _difference;
+}
+
+export function getWeightedProbabilityElement(seed: number) {
+	const mul32instance = mulberry32(seed);
+	return function <T>(value: Array<[T, number]>): T {
+		const total_weight = value.reduce((acc, cur) => acc + cur[1], 0);
+
+		const pdf = value.map((_) => _[1] / total_weight);
+
+		const rand_no_from_0_to_1 = mul32instance();
+
+		for (
+			let i = 0, _sum = pdf[0];
+			i < pdf.length;
+			i++, _sum += pdf[i]
+		) {
+			if (rand_no_from_0_to_1 < _sum) return value[i][0];
+		}
+
+		throw new Error('Impossible state, probability function borked');
+	};
+}
+
+// Some prng i found on the internet
+// Mulberry32, a fast high quality PRNG:
+// https://gist.github.com/tommyettinger/46a874533244883189143505d203312c
+// https://gist.github.com/blixt/f17b47c62508be59987b
+// Thanks to @blixt on github
+// I wonder if I need to do this though, can I just modulus the hash?
+function mulberry32(a: number) {
+	return function () {
+		a = Math.trunc(a);
+		a = Math.trunc(a + 0x6d2b79f5);
+		let t = Math.imul(a ^ (a >>> 15), 1 | a);
+		t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+	};
 }

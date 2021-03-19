@@ -14,7 +14,7 @@ import {
 	ValidationLockInput,
 	ValidationReleaseInput
 } from './interfaces';
-import {Tuple} from './utils';
+import {Tuple, isOfDiscriminatedType} from './utils';
 export type ValidationStages =
 	| ValidationAnnounce
 	| ValidationLock
@@ -63,7 +63,9 @@ export abstract class ValidationState<T extends ValidationStages> {
 /** One wonders whether this is excessive if it's internal... */
 export class ValidationAnnounceState extends ValidationState<ValidationAnnounce> {
 	constructor(value: ValidationStages) {
-		if (!isValidationType<ValidationAnnounce>(value, 'announce')) {
+		if (
+			!isOfDiscriminatedType<ValidationAnnounce>(value, 'announce')
+		) {
 			throw new ContractError('validation not in announce state!');
 		}
 
@@ -73,7 +75,7 @@ export class ValidationAnnounceState extends ValidationState<ValidationAnnounce>
 
 export class ValidationLockState extends ValidationState<ValidationLock> {
 	constructor(value: ValidationStages) {
-		if (!isValidationType<ValidationLock>(value, 'lock')) {
+		if (!isOfDiscriminatedType<ValidationLock>(value, 'lock')) {
 			throw new ContractError('validation not in locked state!');
 		}
 
@@ -83,7 +85,7 @@ export class ValidationLockState extends ValidationState<ValidationLock> {
 
 export class ValidationReleaseState extends ValidationState<ValidationRelease> {
 	constructor(value: ValidationStages) {
-		if (!isValidationType<ValidationRelease>(value, 'release')) {
+		if (!isOfDiscriminatedType<ValidationRelease>(value, 'release')) {
 			throw new ContractError('validation not in released state!');
 		}
 
@@ -97,13 +99,6 @@ type ValidationStateMapsTo<
 	: T extends ValidationLock
 	? ValidationRelease
 	: never;
-
-export function isValidationType<T extends ValidationStages>(
-	target: ValidationStages,
-	discriminator: T['_discriminator']
-): target is T {
-	return discriminator === target._discriminator;
-}
 
 export function isValidationLinkedListType<
 	T extends ValidationStages

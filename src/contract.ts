@@ -6,7 +6,6 @@
 declare const ContractError: any;
 declare const SmartWeave: any;
 import {Account} from './transaction';
-import * as crypto from 'crypto';
 declare const ContractAssert: <T extends boolean>(
 	cond: T,
 	message: string
@@ -14,7 +13,6 @@ declare const ContractAssert: <T extends boolean>(
 import {
 	ArweaveAddress,
 	AccountInterface,
-	InputType,
 	ProposedExecutableInputProxy,
 	ProposedExecutableInput,
 	BidInputProxy,
@@ -35,17 +33,13 @@ import {
 	ExecutableStates,
 	ProposedExecutable,
 	AcceptedExecutable,
-	isProposedExecutable,
-	isAcceptedExecutable,
-	isResultExecutable,
 	ProposedState,
 	AcceptedState,
 	ResultState,
 	ValidatedState,
 	ValidationStates,
 	proposedToAccepted,
-	acceptedToResult,
-	decipherList
+	acceptedToResult
 } from './executable';
 import {
 	ValidationAnnounceState,
@@ -54,7 +48,8 @@ import {
 	validationAnnouncedToLocked,
 	validationLockedToReleased
 } from './validate';
-import {lastElement, Tuple} from './utils';
+
+import {isOfDiscriminatedType} from './utils';
 
 function getValidators(
 	state: StateInterface
@@ -74,15 +69,6 @@ function getValidators(
  * selected executor then uploads result
  * user then validates result or objects to it
  */
-/* Terrible
-const getVaultBalanceKeyValue = (
-	state: StateInterface
-): Record<ArweaveAddress, number> => {
-	return Object.fromEntries(
-		Object.keys(state.vault).map((key, _) => [key, state.vault.key.balance])
-	);
-};
-*/
 
 /**
  * handle takes in a state and and a contract interaction and returns either a
@@ -218,7 +204,11 @@ export function handle(
 			const validators = getValidators(state);
 
 			const result_exec = accepted_exec.next(
-				acceptedToResult(inputProxy, action.caller, validators)
+				acceptedToResult(
+					inputProxy,
+					action.caller,
+					new Set(Object.entries(validators))
+				)
 			);
 
 			const result_giver_account = new Account(
@@ -266,7 +256,7 @@ export function handle(
 				(value) =>
 					value.value.validator === action.caller &&
 					value.value._discriminator === 'announce'
-			) as Tuple<ValidationStates, 1>;
+			) as [ValidationStates];
 
 			ContractAssert(
 				Boolean(matched_validation.length),
@@ -306,7 +296,7 @@ export function handle(
 				(value) =>
 					value.value.validator === action.caller &&
 					value.value._discriminator === 'announce'
-			) as Tuple<ValidationStates, 1>;
+			) as [ValidationStates];
 
 			ContractAssert(
 				Boolean(matched_validation.length),
@@ -321,12 +311,11 @@ export function handle(
 
 			const next_exec = result_exec.verify_and_iterate(
 				getValidators(state)
-			)
+			);
 
 			state.executables[
 				inputProxy.executable_key
 			] = next_exec.consume();
-
 
 			return {state};
 		}
@@ -336,7 +325,10 @@ export function handle(
 		case 'proposed':
 			return {
 				result: Object.entries(state.executables).filter((keyval) =>
-					isProposedExecutable(keyval[1])
+					isOfDiscriminatedType<ProposedExecutable>(
+						keyval[1],
+						'proposed'
+					)
 				)
 			};
 
@@ -344,22 +336,3 @@ export function handle(
 			throw new ContractError('Invalid function call');
 	}
 }
-
-/* Possible future refactor for stuff in the cases,
- * currently not particularly DRY
-function checkExecutable<T extends ExecutableStates>(
-	state: StateInterface,
-	executable_key: ArweaveAddress,
-	executable_state?: ExecutableStates
-) : {
-	if (executable_state) {
-		return
-*/
-
-// Two possible refactors
-// one is Proxy with closure for state
-// second is ExecutableState being saved directly into state instead
-// of instances of the interfaces
-//
-// Possibly also use ExecutableState with conditional types so the correct
-// state of executable stuff goes into the constructor there.

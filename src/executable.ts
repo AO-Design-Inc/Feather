@@ -34,7 +34,9 @@ import {
 	Tuple,
 	LinkedList,
 	isArrayOfDiscriminatedTypes,
-	isOfDiscriminatedType
+	isOfDiscriminatedType,
+	setDifference,
+	getWeightedProbabilityElement
 } from './utils';
 
 /**
@@ -89,7 +91,9 @@ abstract class ExecutableState<T extends ExecutableStates> {
 
 export class ProposedState extends ExecutableState<ProposedExecutable> {
 	constructor(value: ExecutableStates) {
-		if (!isProposedExecutable(value)) {
+		if (
+			!isOfDiscriminatedType<ProposedExecutable>(value, 'proposed')
+		) {
 			throw new ContractError('executable not in proposed state!');
 		}
 
@@ -99,7 +103,9 @@ export class ProposedState extends ExecutableState<ProposedExecutable> {
 
 export class AcceptedState extends ExecutableState<AcceptedExecutable> {
 	constructor(value: ExecutableStates) {
-		if (!isAcceptedExecutable(value)) {
+		if (
+			!isOfDiscriminatedType<AcceptedExecutable>(value, 'accepted')
+		) {
 			throw new ContractError('executable not in accepted state!');
 		}
 
@@ -113,15 +119,6 @@ export class AcceptedState extends ExecutableState<AcceptedExecutable> {
 	get caller() {
 		return this.value.caller;
 	}
-}
-
-function difference<T>(setA: Set<T>, setB: Set<T>) {
-	const _difference = new Set(setA);
-	for (const element of setB) {
-		_difference.delete(element);
-	}
-
-	return _difference;
 }
 
 export type ValidationStates =
@@ -145,12 +142,11 @@ function initialiseValidationState(
 }
 
 export class ResultState extends ExecutableState<ResultExecutable> {
-	// THIS IS THE REFACTOR!
 	// Could mayyybe use tuple
 	validations: ValidationStates[][];
 
 	constructor(value: ExecutableStates) {
-		if (!isResultExecutable(value)) {
+		if (!isOfDiscriminatedType<ResultExecutable>(value, 'result')) {
 			throw new ContractError('executable not in result state!');
 		}
 
@@ -163,32 +159,23 @@ export class ResultState extends ExecutableState<ResultExecutable> {
 	//
 
 	get used_validators() {
-		return this.validations.flatMap((_) => _.map((_) => _.value.validator))
+		return this.validations.flatMap((_) =>
+			_.map((_) => _.value.validator)
+		);
 	}
 
-	get validator_tail() {
-		return lastElement(this.value.validation_linked_list);
-	}
-
-	allowed_validators_object(
+	allowed_validators(
 		validators: Record<ArweaveAddress, Required<AccountInterface>>
 	) {
 		const used_validators = new Set(this.used_validators);
 		const validator_keys = new Set(Object.keys(validators));
-		const allowed_validators = difference(
+		const allowed_validators = setDifference(
 			validator_keys,
 			used_validators
 		);
-		const allowed_validator_object: Record<
-			ArweaveAddress,
-			Required<AccountInterface>
-		> = {};
-
-		for (const i of allowed_validators.values()) {
-			allowed_validator_object[i] = validators[i];
-		}
-
-		return allowed_validator_object;
+		return new Set<[ArweaveAddress, Required<AccountInterface>]>(
+			Array.from(allowed_validators).map((_) => [_, validators._])
+		);
 	}
 
 	consume() {
@@ -205,7 +192,6 @@ export class ResultState extends ExecutableState<ResultExecutable> {
 	verify_and_iterate(
 		validators: Record<ArweaveAddress, Required<AccountInterface>>
 	) {
-		const iv = Buffer.alloc(16, 0);
 		const validatorTail = this.validations[-1].map((_) => _.value);
 		if (
 			isArrayOfDiscriminatedTypes<ValidationRelease>(
@@ -232,9 +218,9 @@ export class ResultState extends ExecutableState<ResultExecutable> {
 			}
 
 			this.validations.push(
-				generateValidators(
-					this.allowed_validators_object(validators)
-				).map(initialiseValidationState)
+				generateValidators(this.allowed_validators(validators)).map(
+					initialiseValidationState
+				)
 			);
 		}
 
@@ -256,7 +242,9 @@ export function decipherList(l: Array<[string, string]>): string[] {
 export class ValidatedState extends ExecutableState<ValidatedExecutable> {
 	// Handle payments and punishments in constructor!
 	constructor(value: ExecutableStates) {
-		if (!isValidatedExecutable(value)) {
+		if (
+			!isOfDiscriminatedType<ValidatedExecutable>(value, 'validated')
+		) {
 			throw new ContractError('executable not in validated state!');
 		}
 
@@ -281,6 +269,8 @@ interface ExecResultInterface {
 	address: ArweaveAddress;
 	height: number;
 	giver: ArweaveAddress;
+	size: number;
+	hash: string;
 }
 
 export interface AcceptedExecutable
@@ -337,79 +327,41 @@ export function proposedToAccepted(
 	};
 }
 
-// Some prng i found on the internet
-// Mulberry32, a fast high quality PRNG:
-// https://gist.github.com/tommyettinger/46a874533244883189143505d203312c
-// https://gist.github.com/blixt/f17b47c62508be59987b
-function mulberry32(a: number) {
-	return function () {
-		a = Math.trunc(a);
-		a = Math.trunc(a + 0x6d2b79f5);
-		let t = Math.imul(a ^ (a >>> 15), 1 | a);
-		t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-	};
-}
-
-// Gets validator after weighting for stake.
-function getWeightedProbabilityValidator(seed: number) {
-	const mul32instance = mulberry32(seed);
-	return function (
-		validators: Record<ArweaveAddress, Required<AccountInterface>>
-	): ArweaveAddress {
-		const validators_keyval = Object.entries(validators);
-		const total_stake = validators_keyval.reduce(
-			(acc, cur) => acc + cur[1].stake,
-			0
-		);
-		const pdf = validators_keyval.map(
-			(value) => value[1].stake / total_stake
-		);
-		// The gods only know whether this works.
-		// For fuck's sake let there not be an off by one here.
-		const rand_no_from_0_to_1 = mul32instance();
-		for (
-			let i = 0, _sum = pdf[0];
-			i < pdf.length;
-			++i, _sum += pdf[i]
-		) {
-			if (rand_no_from_0_to_1 < _sum) return validators_keyval[i][0];
-		}
-
-		throw new ContractError(
-			'Impossible state, probability function borked'
-		);
-	};
-}
-
 function generateValidators(
-	validators: Record<ArweaveAddress, Required<AccountInterface>>
+	validators: Set<[ArweaveAddress, Required<AccountInterface>]>
 ): ValidationAnnounce[] {
-	const validatorReturner = getWeightedProbabilityValidator(
+	const validatorReturner = getWeightedProbabilityElement(
 		Number(SmartWeave.block.indep_hash)
 	);
 
-	const validator1 = validatorReturner(validators);
-	// Need to write tests to catch if dumb shit happens here
-	// I dont know exactly *how* weak the ref to this is
-	// like is it going to remove validator from state? lol.
-	delete validators.validator1;
-	const validator2 = validatorReturner(validators);
-	delete validators.validator2;
+	const validator1 = validatorReturner(
+		Array.from(validators).map((_) => [_, _[1].stake])
+	);
+	validators.delete(validator1);
+	const validator2 = validatorReturner(
+		Array.from(validators).map((_) => [_, _[1].stake])
+	);
+
 	return [
-		{_discriminator: 'announce', validator: validator1},
-		{_discriminator: 'announce', validator: validator2}
+		{_discriminator: 'announce', validator: validator1[0]},
+		{_discriminator: 'announce', validator: validator2[0]}
 	];
 }
 
-export function acceptedToResult(
+export async function acceptedToResult(
 	result_input: ResultInput,
 	caller: ArweaveAddress,
-	validators: Record<ArweaveAddress, Required<AccountInterface>>
-): InputApplier<AcceptedExecutable> {
-	const validatorReturner = getWeightedProbabilityValidator(
-		Number(SmartWeave.block.indep_hash)
-	);
+	validators: Set<[ArweaveAddress, Required<AccountInterface>]>
+): Promise<InputApplier<AcceptedExecutable>> {
+	const [
+		result_hash,
+		result_size
+	] = await SmartWeave.unsafeClient.transactions
+		.get(result_input.result_address)
+		.then((_: any) => [
+			_.tags[0].result_hash as string,
+			_.data_size as number
+		]);
 
 	return (
 		i: AcceptedExecutable
@@ -424,37 +376,10 @@ export function acceptedToResult(
 			result: {
 				address: result_input.result_address,
 				giver: caller,
-				height: SmartWeave.block.height
+				height: SmartWeave.block.height,
+				size: result_size,
+				hash: result_hash
 			}
 		});
 	};
-}
-
-export const isProposedExecutable = (
-	target: ExecutableStates
-): target is ProposedExecutable =>
-	target._discriminator === 'proposed';
-
-/**
- * Maybe use Reflect.has() instead of in here
- */
-export const isAcceptedExecutable = (
-	target: ExecutableStates
-): target is AcceptedExecutable =>
-	target._discriminator === 'accepted';
-
-export const isResultExecutable = (
-	target: ExecutableStates
-): target is ResultExecutable => target._discriminator === 'result';
-
-export const isValidatedExecutable = (
-	target: ExecutableStates
-): target is ValidatedExecutable =>
-	target._discriminator === 'validated';
-
-function isExecutableType<T extends ExecutableStates>(
-	target: ExecutableStates,
-	discriminator: T['_discriminator']
-): target is T {
-	return discriminator === target._discriminator;
 }
