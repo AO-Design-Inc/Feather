@@ -1,3 +1,4 @@
+/*
 import {ExecutableState, ProposedExecutable} from './executable';
 import {
 	SetFunctions,
@@ -76,3 +77,4 @@ const a = new ExecutableState<ProposedExecutable>({
 	caller: 'asdfs',
 	bids: [{quantity: 234, bidder: 'sdfs'}]
 });
+*/

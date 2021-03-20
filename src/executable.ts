@@ -38,6 +38,7 @@ import {
 	setDifference,
 	getWeightedProbabilityElement
 } from './utils';
+import {Account} from './transaction';
 
 /**
  * ExecutableState is a class that wraps the executable state, the only way to
@@ -101,6 +102,11 @@ export class ProposedState extends ExecutableState<ProposedExecutable> {
 	}
 }
 
+const default_timings = {
+	start: SmartWeave.block.height,
+	end: SmartWeave.block.height + 1000
+};
+
 export class AcceptedState extends ExecutableState<AcceptedExecutable> {
 	constructor(value: ExecutableStates) {
 		if (
@@ -118,6 +124,13 @@ export class AcceptedState extends ExecutableState<AcceptedExecutable> {
 
 	get caller() {
 		return this.value.caller;
+	}
+
+	post_collateral(result_giver_account: Account) {
+		result_giver_account.add_vault({
+			amount: 0.5 * this.accepted_bid.quantity,
+			...default_timings
+		});
 	}
 }
 
@@ -190,7 +203,8 @@ export class ResultState extends ExecutableState<ResultExecutable> {
 	}
 
 	verify_and_iterate(
-		validators: Record<ArweaveAddress, Required<AccountInterface>>
+		validators: Record<ArweaveAddress, Required<AccountInterface>>,
+		accounts: Record<ArweaveAddress, AccountInterface>
 	) {
 		const validatorTail = this.validations[-1].map((_) => _.value);
 		if (
@@ -205,22 +219,28 @@ export class ResultState extends ExecutableState<ResultExecutable> {
 				validatorTail.map((_) => [_.symm_key, _.encrypted_hash])
 			);
 
+			const is_correct = JSON.parse(deciphered[0]).is_correct;
+
 			if (deciphered.every((_) => _ === deciphered[0])) {
-				return this.next(
+				this.next(
 					() =>
-						new ValidatedState({
-							...this.consume(),
-							_discriminator: 'validated',
-							is_correct: true
-						})
+						new ValidatedState(
+							{
+								...this.consume(),
+								_discriminator: 'validated',
+								is_correct
+							},
+							accounts
+						)
 				);
-				// Complete and payout!
 			}
 
 			this.validations.push(
-				generateValidators(this.allowed_validators(validators)).map(
-					initialiseValidationState
-				)
+				generateValidators(
+					new Account(accounts, 'regulator'),
+					0.05 * this.value.accepted_bid.quantity,
+					this.allowed_validators(validators)
+				).map((_) => new ValidationAnnounceState(_))
 			);
 		}
 
@@ -240,8 +260,15 @@ export function decipherList(l: Array<[string, string]>): string[] {
 }
 
 export class ValidatedState extends ExecutableState<ValidatedExecutable> {
+	validations: ValidationReleaseState[][];
+
 	// Handle payments and punishments in constructor!
-	constructor(value: ExecutableStates) {
+	constructor(
+		value: ExecutableStates,
+		accounts: Record<ArweaveAddress, AccountInterface>
+	) {
+		// The decision to have decryptedHash be inserted into state is
+		// not... consistent, but I think it is useful.
 		if (
 			!isOfDiscriminatedType<ValidatedExecutable>(value, 'validated')
 		) {
@@ -249,6 +276,46 @@ export class ValidatedState extends ExecutableState<ValidatedExecutable> {
 		}
 
 		super(value);
+
+		const regulator_account = new Account(accounts, 'regulator');
+		const result_giver_account = new Account(
+			accounts,
+			this.value.result.giver
+		);
+		this.validations = getElements(
+			this.value.validation_linked_list
+		).map((v) => v.value.map((_) => new ValidationReleaseState(_)));
+
+		this.validations.flat().forEach((_) => {
+			const validator_account = new Account(
+				accounts,
+				_.value.validator
+			);
+			if (
+				_.value.decrypted_hash ===
+				this.validations[-1][0].value.decrypted_hash
+			) {
+				validator_account.increase_balance(
+					regulator_account,
+					0.05 * this.value.accepted_bid.quantity
+				);
+			} else {
+				validator_account.burn(0.5);
+			}
+		});
+
+		// Put all the proportionality nonsense in one big global enum
+		if (this.value.is_correct) {
+			result_giver_account.increase_balance(
+				new Account(accounts, this.value.caller),
+				this.value.accepted_bid.quantity
+			);
+		} else {
+			regulator_account.increase_balance(
+				result_giver_account,
+				0.5 * this.value.accepted_bid.quantity
+			);
+		}
 	}
 }
 
@@ -269,8 +336,6 @@ interface ExecResultInterface {
 	address: ArweaveAddress;
 	height: number;
 	giver: ArweaveAddress;
-	size: number;
-	hash: string;
 }
 
 export interface AcceptedExecutable
@@ -328,8 +393,19 @@ export function proposedToAccepted(
 }
 
 function generateValidators(
+	regulator: Account,
+	fee: number,
 	validators: Set<[ArweaveAddress, Required<AccountInterface>]>
 ): ValidationAnnounce[] {
+	// First apply holds on regulator account.
+	validators.forEach(() =>
+		regulator.add_vault({
+			amount: fee,
+			end: Number(SmartWeave.block.height) + 1000,
+			start: Number(SmartWeave.block.height)
+		})
+	);
+
 	const validatorReturner = getWeightedProbabilityElement(
 		Number(SmartWeave.block.indep_hash)
 	);
@@ -348,21 +424,12 @@ function generateValidators(
 	];
 }
 
-export async function acceptedToResult(
+export function acceptedToResult(
 	result_input: ResultInput,
 	caller: ArweaveAddress,
-	validators: Set<[ArweaveAddress, Required<AccountInterface>]>
-): Promise<InputApplier<AcceptedExecutable>> {
-	const [
-		result_hash,
-		result_size
-	] = await SmartWeave.unsafeClient.transactions
-		.get(result_input.result_address)
-		.then((_: any) => [
-			_.tags[0].result_hash as string,
-			_.data_size as number
-		]);
-
+	validators: Set<[ArweaveAddress, Required<AccountInterface>]>,
+	accounts: Record<ArweaveAddress, AccountInterface>
+): InputApplier<AcceptedExecutable> {
 	return (
 		i: AcceptedExecutable
 	): ExecutableState<ResultExecutable> => {
@@ -370,15 +437,17 @@ export async function acceptedToResult(
 			...i,
 			_discriminator: 'result',
 			validation_linked_list: {
-				value: generateValidators(validators),
+				value: generateValidators(
+					new Account(accounts, 'regulator'),
+					i.accepted_bid.quantity,
+					validators
+				),
 				next: undefined
 			},
 			result: {
 				address: result_input.result_address,
 				giver: caller,
-				height: SmartWeave.block.height,
-				size: result_size,
-				hash: result_hash
+				height: SmartWeave.block.height
 			}
 		});
 	};

@@ -207,7 +207,8 @@ export function handle(
 				acceptedToResult(
 					inputProxy,
 					action.caller,
-					new Set(Object.entries(validators))
+					new Set(Object.entries(validators)),
+					state.accounts
 				)
 			);
 
@@ -310,7 +311,8 @@ export function handle(
 			);
 
 			const next_exec = result_exec.verify_and_iterate(
-				getValidators(state)
+				getValidators(state),
+				state.accounts
 			);
 
 			state.executables[

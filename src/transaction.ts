@@ -41,7 +41,7 @@ function writable(value: boolean) {
  * so balance can take either address, vault or vault, address
  */
 export class Account {
-	readonly value: AccountInterface;
+	readonly value: AccountInterface | Required<AccountInterface>;
 	/** Haven't fully decided between camelCase and underscore_case */
 	private readonly block_height: number;
 
@@ -60,10 +60,16 @@ export class Account {
 		this.block_height = SmartWeave.block.height;
 	}
 
+	// Only call this if you KNOW you're dealing with a validator
+	burn(proportion: number) {
+		this.value.stake = (this.value.stake ?? 0) * proportion;
+	}
+
 	get valid_vaults(): VaultInterface[] {
-		return this.value.vaults.filter(vault =>
-			vault.end >= this.block_height &&
-			vault.start <= this.block_height
+		return this.value.vaults.filter(
+			(vault) =>
+				vault.end >= this.block_height &&
+				vault.start <= this.block_height
 		);
 	}
 
@@ -74,12 +80,14 @@ export class Account {
 		/* eslint-disable unicorn/no-reduce */
 		return this.value.vaults
 			.filter(
-				vault =>
+				(vault) =>
 					vault.end >= SmartWeave.block.height &&
 					vault.start <= SmartWeave.block.height
 			)
-			.reduce((acc: number, cur) =>
-				acc - cur.amount, this.value.balance);
+			.reduce(
+				(acc: number, cur) => acc - cur.amount,
+				this.value.balance
+			);
 		/* eslint-enable unicorn/no-reduce */
 	}
 
@@ -105,7 +113,10 @@ export class Account {
 			throw new ContractError('not enough balance');
 		}
 
-		if (this.block_height < vault.start || this.block_height >= vault.end) {
+		if (
+			this.block_height < vault.start ||
+			this.block_height >= vault.end
+		) {
 			throw new ContractError('invalid block height');
 		}
 
@@ -120,11 +131,14 @@ export class Account {
 	 */
 	async remove_vault(amount: number): Promise<void> {
 		return new Promise((resolve, reject) => {
-			const amounts_array = this.valid_vaults.map(item => item.amount);
+			const amounts_array = this.valid_vaults.map(
+				(item) => item.amount
+			);
 			if (amounts_array.includes(amount)) {
 				this.value.balance -= amount;
 				this.value.vaults = this.valid_vaults.splice(
-					amounts_array.indexOf(amount));
+					amounts_array.indexOf(amount)
+				);
 				resolve();
 			} else {
 				reject(new ContractError(`no vault of quantity ${amount}`));
@@ -139,11 +153,13 @@ export class Account {
 	 * @param amount - amount to add to balance, checks that amount is > 0.
 	 */
 	increase_balance(from_account: Account, amount: number): void {
-		from_account.remove_vault(amount).then(() => {
-			this.value.balance += amount;
-		}).catch((err) => {
-			throw err;
-		});
+		from_account
+			.remove_vault(amount)
+			.then(() => {
+				this.value.balance += amount;
+			})
+			.catch((error) => {
+				throw error;
+			});
 	}
-
 }

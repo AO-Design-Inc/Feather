@@ -1,5 +1,15 @@
 // Report bug with eslint & xo with defaults in generic
 import {ValidationStages, ValidationAnnounce} from './validate';
+import * as crypto from 'crypto';
+
+export function decipher(l: [string, string]): string {
+	let decrypted: string;
+	const iv = Buffer.alloc(16, 0);
+	const decipher = crypto.createDecipheriv('aes-192-gcm', l[0], iv);
+	decrypted = decipher.update(l[1], 'hex', 'utf8');
+	decrypted = decipher.final('utf8');
+	return decrypted;
+}
 
 export type Tuple<
 	T,

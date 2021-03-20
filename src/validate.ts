@@ -14,7 +14,7 @@ import {
 	ValidationLockInput,
 	ValidationReleaseInput
 } from './interfaces';
-import {Tuple, isOfDiscriminatedType} from './utils';
+import {Tuple, isOfDiscriminatedType, decipher} from './utils';
 export type ValidationStages =
 	| ValidationAnnounce
 	| ValidationLock
@@ -44,6 +44,7 @@ export interface ValidationRelease
 	extends Omit<ValidationLock, '_discriminator'> {
 	_discriminator: 'release';
 	symm_key: string;
+	decrypted_hash: string;
 }
 
 export abstract class ValidationState<T extends ValidationStages> {
@@ -130,11 +131,13 @@ export function validationAnnouncedToLocked(
 export function validationLockedToReleased(
 	release_input: ValidationReleaseInput
 ): ValidationApplier<ValidationLock> {
+	const symm_key = release_input.symm_key;
 	return (i: ValidationLock): ValidationState<ValidationRelease> => {
 		return new ValidationReleaseState({
 			...i,
 			_discriminator: 'release',
-			symm_key: release_input.symm_key
+			symm_key,
+			decrypted_hash: decipher([symm_key, i.encrypted_hash])
 		});
 	};
 }
