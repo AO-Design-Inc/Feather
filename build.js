@@ -2,9 +2,10 @@ const {build} = require('esbuild');
 
 build({
 	entryPoints: ['./src/contract.ts'],
-	platform: 'node',
 	outdir: './dist',
+	format: 'esm',
 	minify: false,
 	bundle: true,
-	format: 'esm'
+	platform: 'node',
+	target: 'es2019'
 }).catch(() => process.exit(1));

@@ -1,14 +1,11 @@
 // Report bug with eslint & xo with defaults in generic
 import {ValidationStages, ValidationAnnounce} from './validate';
-import * as crypto from 'crypto';
+declare const SmartWeave: any;
 
-export function decipher(l: [string, string]): string {
-	let decrypted: string;
-	const iv = Buffer.alloc(16, 0);
-	const decipher = crypto.createDecipheriv('aes-192-gcm', l[0], iv);
-	decrypted = decipher.update(l[1], 'hex', 'utf8');
-	decrypted = decipher.final('utf8');
-	return decrypted;
+export async function decipher(l: [string, string]): Promise<string> {
+	return SmartWeave.arweave.crypto.decrypt(Buffer.from(l[1],'hex'), l[0]).then(
+		(_:Uint8Array) => _.toString()
+	);
 }
 
 export type Tuple<
@@ -25,6 +22,14 @@ export function lastElement<T extends {next: T | undefined}>(
 	list: T
 ): T {
 	return list.next ? lastElement(list.next) : list;
+}
+
+export function lastElementArray<T>(array: T[]): T {
+	return array[array.length - 1];
+}
+
+export function lastElementArrayIndex<T>(array: T[]): number {
+	return array.length - 1;
 }
 
 export function getElements<T extends {next: T | undefined}>(
@@ -65,7 +70,7 @@ export function isArrayOfDiscriminatedTypes<
 	target: any[],
 	discriminator: T extends {_discriminator: infer U} ? U : never
 ): target is T[] {
-	return target.every((_) => _._discriminator === discriminator);
+	return target?.every((_) => _._discriminator === discriminator);
 }
 
 export function isOfDiscriminatedType<
@@ -100,7 +105,9 @@ export function getWeightedProbabilityElement(seed: number) {
 			i < pdf.length;
 			i++, _sum += pdf[i]
 		) {
-			if (rand_no_from_0_to_1 < _sum) return value[i][0];
+			if (rand_no_from_0_to_1 < _sum) {
+				return value[i][0];
+			}
 		}
 
 		throw new Error('Impossible state, probability function borked');

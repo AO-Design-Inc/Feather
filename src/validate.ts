@@ -44,7 +44,6 @@ export interface ValidationRelease
 	extends Omit<ValidationLock, '_discriminator'> {
 	_discriminator: 'release';
 	symm_key: string;
-	decrypted_hash: string;
 }
 
 export abstract class ValidationState<T extends ValidationStages> {
@@ -136,8 +135,7 @@ export function validationLockedToReleased(
 		return new ValidationReleaseState({
 			...i,
 			_discriminator: 'release',
-			symm_key,
-			decrypted_hash: decipher([symm_key, i.encrypted_hash])
+			symm_key
 		});
 	};
 }

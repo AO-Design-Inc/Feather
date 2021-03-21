@@ -12,26 +12,6 @@ import {
 declare const ContractError: any;
 declare const SmartWeave: any;
 
-function configurable(value: boolean) {
-	return function (
-		target: any,
-		propertyKey: string,
-		descriptor: PropertyDescriptor
-	) {
-		descriptor.configurable = value;
-	};
-}
-
-function writable(value: boolean) {
-	return function (
-		target: any,
-		propertyKey: string,
-		descriptor: PropertyDescriptor
-	) {
-		descriptor.writable = value;
-	};
-}
-
 // MAKE THE VAULTS A CLASS, WITH GETTER THAT CHECKS VALIDITY! THAT'LL CLEAN
 // EVERYTHING UP SO MUCH
 /** So a transaction has two states
@@ -93,12 +73,9 @@ export class Account {
 
 	consume() {
 		// Possibly make this a decorator in the future.
-		Object.freeze(this);
 		return this.value;
 	}
 
-	@configurable(false)
-	@writable(false)
 	get _value() {
 		return this.value;
 	}
@@ -129,21 +106,17 @@ export class Account {
 	 * be able to complete!
 	 * @returns Promise
 	 */
-	async remove_vault(amount: number): Promise<void> {
-		return new Promise((resolve, reject) => {
-			const amounts_array = this.valid_vaults.map(
-				(item) => item.amount
+	remove_vault(amount: number): void {
+		const amounts_array = this.valid_vaults.map((_) => _.amount);
+
+		if (amounts_array.includes(amount)) {
+			this.value.balance -= amount;
+			this.value.vaults = this.valid_vaults.filter(
+				(_, i) => i !== amounts_array.indexOf(amount)
 			);
-			if (amounts_array.includes(amount)) {
-				this.value.balance -= amount;
-				this.value.vaults = this.valid_vaults.splice(
-					amounts_array.indexOf(amount)
-				);
-				resolve();
-			} else {
-				reject(new ContractError(`no vault of quantity ${amount}`));
-			}
-		});
+		} else {
+			throw new ContractError(`no vault of quantity ${amount}`);
+		}
 	}
 
 	/** Used to pay to an account, checks that amount is not illegal.
@@ -153,13 +126,6 @@ export class Account {
 	 * @param amount - amount to add to balance, checks that amount is > 0.
 	 */
 	increase_balance(from_account: Account, amount: number): void {
-		from_account
-			.remove_vault(amount)
-			.then(() => {
-				this.value.balance += amount;
-			})
-			.catch((error) => {
-				throw error;
-			});
+		from_account.remove_vault(amount), (this.value.balance += amount);
 	}
 }

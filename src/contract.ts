@@ -49,7 +49,11 @@ import {
 	validationLockedToReleased
 } from './validate';
 
-import {isOfDiscriminatedType} from './utils';
+import {
+	isOfDiscriminatedType,
+	lastElementArray,
+	lastElementArrayIndex
+} from './utils';
 
 function getValidators(
 	state: StateInterface
@@ -83,11 +87,10 @@ function getValidators(
  * seen or if any inputs are of the wrong type.
  * @returns new state or result.
  */
-export function handle(
+export async function handle(
 	state: StateInterface,
 	action: ActionInterface
-): ContractHandlerOutput {
-	const blockHeight: number = SmartWeave.block.height;
+): Promise<ContractHandlerOutput> {
 	switch (action.input.function) {
 		// Process proposing new executable.
 		case 'propose': {
@@ -106,7 +109,7 @@ export function handle(
 				bids: [],
 				caller: action.caller,
 				executable: {
-					birth_height: blockHeight,
+					birth_height: SmartWeave.block.height,
 					executable_address: inputProxy.executable_address,
 					executable_kind: inputProxy.executable_kind
 				}
@@ -171,8 +174,8 @@ export function handle(
 			);
 			accepter_account.add_vault({
 				amount: inputProxy.accepted_bid.quantity,
-				start: blockHeight,
-				end: blockHeight + 1000
+				start: SmartWeave.block.height,
+				end: SmartWeave.block.height + 1000
 			});
 
 			state.executables[inputProxy.executable_key] =
@@ -203,6 +206,13 @@ export function handle(
 
 			const validators = getValidators(state);
 
+			const result_giver_account = new Account(
+				state.accounts,
+				action.caller
+			);
+
+			accepted_exec.post_collateral(result_giver_account);
+
 			const result_exec = accepted_exec.next(
 				acceptedToResult(
 					inputProxy,
@@ -212,26 +222,10 @@ export function handle(
 				)
 			);
 
-			const result_giver_account = new Account(
-				state.accounts,
-				action.caller
-			);
-			const accepter_account = new Account(
-				state.accounts,
-				ref_exec.caller
-			);
-
-			result_giver_account.increase_balance(
-				accepter_account,
-				accepted_exec.accepted_bid.quantity
-			);
-
 			// Validate!
 			// Wait... There is no result executable, it IS the
 			// validating executable.
 
-			state.accounts[ref_exec.caller] = accepter_account.consume();
-			state.accounts[action.caller] = result_giver_account.consume();
 			state.executables[
 				inputProxy.executable_key
 			] = result_exec.consume();
@@ -252,22 +246,22 @@ export function handle(
 			// if so, take the lock.
 
 			// With Linked list we do this instead.
+			//
 
-			const matched_validation = result_exec.validations[-1].filter(
-				(value) =>
-					value.value.validator === action.caller &&
-					value.value._discriminator === 'announce'
-			) as [ValidationStates];
+			const matched_validation_index = result_exec.validation_tail.findIndex(
+				(_) =>
+					_.value.validator === action.caller &&
+					_.value._discriminator === 'announce'
+			);
 
 			ContractAssert(
-				Boolean(matched_validation.length),
+				matched_validation_index !== -1,
 				'no matching validation!'
 			);
 
-			matched_validation[0] = new ValidationLockState(
-				(matched_validation[0] as ValidationAnnounceState).next(
-					validationAnnouncedToLocked(inputProxy)
-				).value
+			result_exec.lock_validation(
+				matched_validation_index,
+				inputProxy
 			);
 
 			state.executables[
@@ -287,39 +281,43 @@ export function handle(
 			const result_exec = new ResultState(ref_exec);
 
 			if (
-				!result_exec.validations[-1].every(
-					(_) => _.value._discriminator === 'lock'
+				!result_exec.validation_tail.every(
+					(_) => _.value._discriminator !== 'announce'
 				)
 			)
 				throw new ContractError('entire vll is not locked');
 
-			const matched_validation = result_exec.validations[-1].filter(
+			const matched_validation_index = result_exec.validation_tail.findIndex(
 				(value) =>
 					value.value.validator === action.caller &&
-					value.value._discriminator === 'announce'
-			) as [ValidationStates];
+					value.value._discriminator === 'lock'
+			);
 
 			ContractAssert(
-				Boolean(matched_validation.length),
+				matched_validation_index !== -1,
 				'no matching validation!'
 			);
 
-			matched_validation[0] = new ValidationReleaseState(
-				(matched_validation[0] as ValidationLockState).next(
-					validationLockedToReleased(inputProxy)
-				).value
+			result_exec.release_validation(
+				matched_validation_index,
+				inputProxy
 			);
 
-			const next_exec = result_exec.verify_and_iterate(
-				getValidators(state),
-				state.accounts
-			);
+			try {
+				const next_exec = result_exec.check_fully_released()
+					? await result_exec.branch(
+							getValidators(state),
+							state.accounts
+					  )
+					: result_exec;
+				state.executables[
+					inputProxy.executable_key
+				] = next_exec.consume();
 
-			state.executables[
-				inputProxy.executable_key
-			] = next_exec.consume();
-
-			return {state};
+				return {state};
+			} catch (error: unknown) {
+				throw error;
+			}
 		}
 
 		// Filters out list of executables in proposed state so

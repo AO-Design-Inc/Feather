@@ -1,8 +1,9 @@
 {
 	"compilerOptions": {
-		"esModuleInterop": true,
+		"esModuleInterop": false,
 		"outDir": "built",
 		"downlevelIteration": true,
+		"module": "ESNext",
 		"experimentalDecorators": true,
 		"lib": ["es2019"],
 		"target": "es6",

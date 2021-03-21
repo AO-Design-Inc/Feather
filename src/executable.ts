@@ -2,7 +2,7 @@
  * {@link ExecutableState} class declared here
  * @packageDocumentation
  */
-import * as crypto from 'crypto';
+// import * as SmartWeave.arweave.crypto from 'SmartWeave.arweave.crypto';
 declare const SmartWeave: any;
 declare const ContractError: any;
 declare const ContractAssert: <T extends boolean>(
@@ -16,7 +16,9 @@ import {
 	AcceptedBidInput,
 	ResultInput,
 	StateInterface,
-	AccountInterface
+	AccountInterface,
+	ValidationLockInput,
+	ValidationReleaseInput
 } from './interfaces';
 import {
 	ValidationAnnounce,
@@ -25,7 +27,9 @@ import {
 	ValidationStages,
 	ValidationAnnounceState,
 	ValidationReleaseState,
-	ValidationLockState
+	ValidationLockState,
+	validationAnnouncedToLocked,
+	validationLockedToReleased
 } from './validate';
 import {
 	lastElement,
@@ -36,7 +40,10 @@ import {
 	isArrayOfDiscriminatedTypes,
 	isOfDiscriminatedType,
 	setDifference,
-	getWeightedProbabilityElement
+	getWeightedProbabilityElement,
+	lastElementArray,
+	lastElementArrayIndex,
+	decipher
 } from './utils';
 import {Account} from './transaction';
 
@@ -102,9 +109,11 @@ export class ProposedState extends ExecutableState<ProposedExecutable> {
 	}
 }
 
-const default_timings = {
-	start: SmartWeave.block.height,
-	end: SmartWeave.block.height + 1000
+const default_timings = () => {
+	return {
+		start: SmartWeave.block.height,
+		end: SmartWeave.block.height + 1000
+	};
 };
 
 export class AcceptedState extends ExecutableState<AcceptedExecutable> {
@@ -129,7 +138,7 @@ export class AcceptedState extends ExecutableState<AcceptedExecutable> {
 	post_collateral(result_giver_account: Account) {
 		result_giver_account.add_vault({
 			amount: 0.5 * this.accepted_bid.quantity,
-			...default_timings
+			...default_timings()
 		});
 	}
 }
@@ -171,9 +180,41 @@ export class ResultState extends ExecutableState<ResultExecutable> {
 	// Spawn new validation
 	//
 
+	get validation_tail() {
+		return this.validations[lastElementArrayIndex(this.validations)];
+	}
+
 	get used_validators() {
 		return this.validations.flatMap((_) =>
 			_.map((_) => _.value.validator)
+		);
+	}
+
+	lock_validation(
+		validation_index: number,
+		input_proxy: ValidationLockInput
+	): void {
+		this.validation_tail[validation_index] = new ValidationLockState(
+			(this.validation_tail[
+				validation_index
+			] as ValidationAnnounceState).next(
+				validationAnnouncedToLocked(input_proxy)
+			).value
+		);
+	}
+
+	release_validation(
+		validation_index: number,
+		input_proxy: ValidationReleaseInput
+	): void {
+		this.validation_tail[
+			validation_index
+		] = new ValidationReleaseState(
+			(this.validation_tail[
+				validation_index
+			] as ValidationLockState).next(
+				validationLockedToReleased(input_proxy)
+			).value
 		);
 	}
 
@@ -202,65 +243,70 @@ export class ResultState extends ExecutableState<ResultExecutable> {
 		return this.value;
 	}
 
-	verify_and_iterate(
+	check_fully_released() {
+		return isArrayOfDiscriminatedTypes<ValidationRelease>(
+			this.validation_tail.map((_) => _.value),
+			'release'
+		);
+	}
+
+	async branch(
 		validators: Record<ArweaveAddress, Required<AccountInterface>>,
 		accounts: Record<ArweaveAddress, AccountInterface>
 	) {
-		const validatorTail = this.validations[-1].map((_) => _.value);
+		const vt = this.validation_tail.map((_) => _.value);
+
 		if (
-			isArrayOfDiscriminatedTypes<ValidationRelease>(
-				validatorTail,
-				'release'
-			)
+			!isArrayOfDiscriminatedTypes<ValidationRelease>(vt, 'release')
 		) {
-			// Report error in being unable to use map in validated
-			// arr
-			const deciphered = decipherList(
-				validatorTail.map((_) => [_.symm_key, _.encrypted_hash])
-			);
-
-			const is_correct = JSON.parse(deciphered[0]).is_correct;
-
-			if (deciphered.every((_) => _ === deciphered[0])) {
-				this.next(
-					() =>
-						new ValidatedState(
-							{
-								...this.consume(),
-								_discriminator: 'validated',
-								is_correct
-							},
-							accounts
-						)
-				);
-			}
-
-			this.validations.push(
-				generateValidators(
-					new Account(accounts, 'regulator'),
-					0.05 * this.value.accepted_bid.quantity,
-					this.allowed_validators(validators)
-				).map((_) => new ValidationAnnounceState(_))
+			throw new ContractError(
+				'cannot branch if validations not released'
 			);
 		}
 
-		return this;
-	}
-}
+		const deciphered_promises = vt.map(async (_) =>
+			decipher([_.symm_key, _.encrypted_hash])
+		);
 
-export function decipherList(l: Array<[string, string]>): string[] {
-	const decrypted: string[] = [];
-	const iv = Buffer.alloc(16, 0);
-	l.forEach((v, i) => {
-		const decipher = crypto.createDecipheriv('aes-192-gcm', v[0], iv);
-		decrypted[i] = decipher.update(v[1], 'hex', 'utf8');
-		decrypted[i] = decipher.final('utf8');
-	});
-	return decrypted;
+		return Promise.all(deciphered_promises)
+			.then((deciphered) => {
+				const is_correct = JSON.parse(deciphered[0]).is_correct;
+
+				if (deciphered.every((_) => _ === deciphered[0])) {
+					return this.next(
+						() =>
+							new ValidatedState(
+								{
+									...this.consume(),
+									_discriminator: 'validated',
+									is_correct
+								},
+								accounts
+							)
+					);
+				}
+
+				this.validations.push(
+					generateValidators(
+						new Account(accounts, 'regulator'),
+						0.05 * this.value.accepted_bid.quantity,
+						this.allowed_validators(validators)
+					).map((_) => new ValidationAnnounceState(_))
+				);
+				return this;
+			})
+			.catch((error) => {
+				throw new ContractError(`${String(error)}`);
+			});
+	}
 }
 
 export class ValidatedState extends ExecutableState<ValidatedExecutable> {
 	validations: ValidationReleaseState[][];
+
+	get validation_tail() {
+		return this.validations[lastElementArrayIndex(this.validations)];
+	}
 
 	// Handle payments and punishments in constructor!
 	constructor(
@@ -286,14 +332,20 @@ export class ValidatedState extends ExecutableState<ValidatedExecutable> {
 			this.value.validation_linked_list
 		).map((v) => v.value.map((_) => new ValidationReleaseState(_)));
 
-		this.validations.flat().forEach((_) => {
+		this.validations.flat().forEach(async (_) => {
 			const validator_account = new Account(
 				accounts,
 				_.value.validator
 			);
 			if (
-				_.value.decrypted_hash ===
-				this.validations[-1][0].value.decrypted_hash
+				(await decipher([
+					_.value.symm_key,
+					_.value.encrypted_hash
+				])) ===
+				(await decipher([
+					this.validation_tail[0].value.symm_key,
+					this.validation_tail[0].value.encrypted_hash
+				]))
 			) {
 				validator_account.increase_balance(
 					regulator_account,
@@ -439,7 +491,7 @@ export function acceptedToResult(
 			validation_linked_list: {
 				value: generateValidators(
 					new Account(accounts, 'regulator'),
-					i.accepted_bid.quantity,
+					0.05 * i.accepted_bid.quantity,
 					validators
 				),
 				next: undefined
