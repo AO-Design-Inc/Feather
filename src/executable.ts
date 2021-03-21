@@ -137,7 +137,7 @@ export class AcceptedState extends ExecutableState<AcceptedExecutable> {
 
 	post_collateral(result_giver_account: Account) {
 		result_giver_account.add_vault({
-			amount: 0.5 * this.accepted_bid.quantity,
+			amount: 0.1 * this.accepted_bid.quantity,
 			...default_timings()
 		});
 	}
@@ -362,12 +362,12 @@ export class ValidatedState extends ExecutableState<ValidatedExecutable> {
 				new Account(accounts, this.value.caller),
 				this.value.accepted_bid.quantity
 			);
-		} else {
-			regulator_account.increase_balance(
-				result_giver_account,
-				0.5 * this.value.accepted_bid.quantity
-			);
 		}
+
+		regulator_account.increase_balance(
+			result_giver_account,
+			0.1 * this.value.accepted_bid.quantity
+		);
 	}
 }
 
