@@ -37,7 +37,9 @@ export interface ValidationAnnounce {
 export interface ValidationLock
 	extends Omit<ValidationAnnounce, '_discriminator'> {
 	_discriminator: 'lock';
-	encrypted_hash: string;
+	// Deprecated encrypted_hash in favour of encrypted_obj;
+	encrypted_hash?: string;
+	encrypted_obj: string;
 }
 
 export interface ValidationRelease
@@ -122,7 +124,8 @@ export function validationAnnouncedToLocked(
 		return new ValidationLockState({
 			...i,
 			_discriminator: 'lock',
-			encrypted_hash: lock_input.encrypted_hash
+			encrypted_hash: lock_input.encrypted_hash,
+			encrypted_obj: lock_input.encrypted_obj
 		});
 	};
 }

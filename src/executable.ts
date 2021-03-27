@@ -265,7 +265,7 @@ export class ResultState extends ExecutableState<ResultExecutable> {
 		}
 
 		const deciphered_promises = vt.map(async (_) =>
-			decipher([_.symm_key, _.encrypted_hash])
+			decipher([_.symm_key, _.encrypted_obj])
 		);
 
 		return Promise.all(deciphered_promises)
@@ -313,8 +313,6 @@ export class ValidatedState extends ExecutableState<ValidatedExecutable> {
 		value: ExecutableStates,
 		accounts: Record<ArweaveAddress, AccountInterface>
 	) {
-		// The decision to have decryptedHash be inserted into state is
-		// not... consistent, but I think it is useful.
 		if (
 			!isOfDiscriminatedType<ValidatedExecutable>(value, 'validated')
 		) {
@@ -333,6 +331,12 @@ export class ValidatedState extends ExecutableState<ValidatedExecutable> {
 		).map((v) => v.value.map((_) => new ValidationReleaseState(_)));
 
 		this.validations.flat().forEach(async (_) => {
+			// Decrypting validation_tail for every one of these is
+			// a lot of double work and should be eliminated, but I
+			// don't want to right indent this whole thing in a
+			// promiseand hopefully this won't run too much
+			// RESOLUTION: put both validation_tail[0] decrypt
+			// and this into different methods.
 			const validator_account = new Account(
 				accounts,
 				_.value.validator
@@ -340,11 +344,11 @@ export class ValidatedState extends ExecutableState<ValidatedExecutable> {
 			if (
 				(await decipher([
 					_.value.symm_key,
-					_.value.encrypted_hash
+					_.value.encrypted_obj
 				])) ===
 				(await decipher([
 					this.validation_tail[0].value.symm_key,
-					this.validation_tail[0].value.encrypted_hash
+					this.validation_tail[0].value.encrypted_obj
 				]))
 			) {
 				validator_account.increase_balance(

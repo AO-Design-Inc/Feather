@@ -238,7 +238,9 @@ export const ResultInputProxy: ProxyHandler<ResultInput> = {
 export interface ValidationLockInput extends InputInterface {
 	function: SetFunctions.validate_lock;
 	executable_key: ArweaveAddress;
-	encrypted_hash: string;
+	// DEPRECATED encrypted_hash in favour of encrypted_obj
+	encrypted_hash?: string;
+	encrypted_obj: string;
 }
 
 export const ValidationLockInputProxy: ProxyHandler<ValidationLockInput> = {
@@ -252,6 +254,14 @@ export const ValidationLockInputProxy: ProxyHandler<ValidationLockInput> = {
 					'invalid executable key (not arweave address)'
 				);
 				return target.executable_key;
+			case 'encrypted_obj':
+				ContractAssert(
+					typeof target.encrypted_obj === 'string',
+					'encrypted_obj is string'
+				);
+
+				return target.encrypted_obj;
+
 			default:
 				throw new ContractError('invalid key');
 		}

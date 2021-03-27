@@ -3,9 +3,9 @@ import {ValidationStages, ValidationAnnounce} from './validate';
 declare const SmartWeave: any;
 
 export async function decipher(l: [string, string]): Promise<string> {
-	return SmartWeave.arweave.crypto.decrypt(Buffer.from(l[1],'hex'), l[0]).then(
-		(_:Uint8Array) => _.toString()
-	);
+	return SmartWeave.arweave.crypto
+		.decrypt(Buffer.from(l[1], 'hex'), l[0])
+		.then((_: Uint8Array) => _.toString());
 }
 
 export type Tuple<
