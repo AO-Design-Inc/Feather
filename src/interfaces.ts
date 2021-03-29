@@ -239,15 +239,12 @@ export interface ValidationLockInput extends InputInterface {
 	function: SetFunctions.validate_lock;
 	executable_key: ArweaveAddress;
 	// DEPRECATED encrypted_hash in favour of encrypted_obj
-	encrypted_hash?: string;
 	encrypted_obj: string;
 }
 
 export const ValidationLockInputProxy: ProxyHandler<ValidationLockInput> = {
 	get(target: ValidationLockInput, p: keyof ValidationLockInput) {
 		switch (p) {
-			case 'encrypted_hash':
-				return target.encrypted_hash;
 			case 'executable_key':
 				ContractAssert(
 					isArweaveAddress(target.executable_key),
