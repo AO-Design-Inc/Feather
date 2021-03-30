@@ -129,3 +129,7 @@ function mulberry32(a: number) {
 		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 	};
 }
+
+export function removeElementByIndex<T>(from: Array<T>, index: number): Array<T> {
+	return from.slice(0,index).concat(from.slice(index + 1));
+}

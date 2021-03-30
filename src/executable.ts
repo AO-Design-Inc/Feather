@@ -43,7 +43,8 @@ import {
 	getWeightedProbabilityElement,
 	lastElementArray,
 	lastElementArrayIndex,
-	decipher
+	decipher,
+	removeElementByIndex
 } from './utils';
 import {Account} from './transaction';
 
@@ -194,6 +195,21 @@ export class ResultState extends ExecutableState<ResultExecutable> {
 		validation_index: number,
 		input_proxy: ValidationLockInput
 	): void {
+		if (
+			this.validation_tail
+				.filter((_) =>
+					isOfDiscriminatedType<ValidationStages>(_.value, 'lock')
+				)
+				.some(
+					(_) =>
+						(_ as ValidationLockState).value.encrypted_obj ===
+						input_proxy.encrypted_obj
+				)
+		)
+			throw new ContractError(
+				'cannot have identical encrypted objects!'
+			);
+
 		this.validation_tail[validation_index] = new ValidationLockState(
 			(this.validation_tail[
 				validation_index
