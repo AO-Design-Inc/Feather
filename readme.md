@@ -3,9 +3,9 @@
 The Feather Contract provides a mechanism to connect wasm executor nodes to
 clients and stores code on the arweave blockchain.
 
-To guarantee correct execution, a fisherman type architecture implemented atop
-this contract, with angler nodes to check code execution is
-***planned***. This will be incentivized via a staking mechanism.
+To guarantee correct execution, a fisherman type architecture is 
+implemented atop this contract, with angler nodes to check code execution.
+This is incentivized by a staking mechanism.
 
 # System
 
