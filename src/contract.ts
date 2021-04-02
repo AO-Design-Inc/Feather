@@ -3,6 +3,7 @@
  * Defines {@link handle}, as required by smartweave.
  * @packageDocumentation
  */
+/* eslint new-cap: 0 */
 declare const ContractError: any;
 declare const SmartWeave: any;
 import {Account} from './transaction';
@@ -240,13 +241,7 @@ export async function handle(
 			const ref_exec = state.executables[inputProxy.executable_key];
 			const result_exec = new ResultState(ref_exec);
 
-			// Check for correct validation in tree
-			// get apices of validation tree
-			// check if caller *in* them
-			// if so, take the lock.
-
 			// With Linked list we do this instead.
-			//
 
 			const matched_validation_index = result_exec.validation_tail.findIndex(
 				(_) =>
