@@ -83,64 +83,7 @@
 								<li class="tsd-kind-class tsd-parent-kind-module"><a href="../classes/transaction.account.html" class="tsd-kind-icon">Account</a></li>
 							</ul>
 						</section>
-						<section class="tsd-index-section ">
-							<h3>Functions</h3>
-							<ul class="tsd-index-list">
-								<li class="tsd-kind-function tsd-parent-kind-module"><a href="transaction.html#balancehandler" class="tsd-kind-icon">balance<wbr>Handler</a></li>
-							</ul>
-						</section>
 					</div>
-				</section>
-			</section>
-			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Functions</h2>
-				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
-					<a name="balancehandler" class="tsd-anchor"></a>
-					<h3>balance<wbr>Handler</h3>
-					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
-						<li class="tsd-signature tsd-kind-icon">balance<wbr>Handler<span class="tsd-signature-symbol">(</span>from_account<span class="tsd-signature-symbol">: </span><a href="../classes/transaction.account.html" class="tsd-signature-type" data-tsd-kind="Class">Account</a>, to_account<span class="tsd-signature-symbol">: </span><a href="../classes/transaction.account.html" class="tsd-signature-type" data-tsd-kind="Class">Account</a>, deduct<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">[</span><a href="../classes/transaction.account.html" class="tsd-signature-type" data-tsd-kind="Class">Account</a><span class="tsd-signature-symbol">, </span><a href="../classes/transaction.account.html" class="tsd-signature-type" data-tsd-kind="Class">Account</a><span class="tsd-signature-symbol">]</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/f9df34a/src/transaction.ts#L121">transaction.ts:121</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Used to send feathers from one account to another account, ensures that
-										from account has money by using @link{Account.remove_vault}. A refactor here
-										that makes it clearer that money MUST go out from from_account and to
-									to_account would be desirable.</p>
-								</div>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>from_account: <a href="../classes/transaction.account.html" class="tsd-signature-type" data-tsd-kind="Class">Account</a></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Account that feathers come from.</p>
-									</div>
-								</li>
-								<li>
-									<h5>to_account: <a href="../classes/transaction.account.html" class="tsd-signature-type" data-tsd-kind="Class">Account</a></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Account that feathers go to.</p>
-									</div>
-								</li>
-								<li>
-									<h5>deduct: <span class="tsd-signature-type">number</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Amount that is deducted from from_account and sent to
-										to_account.</p>
-									</div>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-symbol">[</span><a href="../classes/transaction.account.html" class="tsd-signature-type" data-tsd-kind="Class">Account</a><span class="tsd-signature-symbol">, </span><a href="../classes/transaction.account.html" class="tsd-signature-type" data-tsd-kind="Class">Account</a><span class="tsd-signature-symbol">]</span></h4>
-							<p>tuple with modified (from_account, to_account).</p>
-						</li>
-					</ul>
 				</section>
 			</section>
 		</div>
@@ -149,6 +92,9 @@
 				<ul>
 					<li class=" ">
 						<a href="../modules.html">Exports</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="constants.html">constants</a>
 					</li>
 					<li class=" tsd-kind-module">
 						<a href="contract.html">contract</a>
@@ -162,15 +108,18 @@
 					<li class="current tsd-kind-module">
 						<a href="transaction.html">transaction</a>
 					</li>
+					<li class=" tsd-kind-module">
+						<a href="utils.html">utils</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="validate.html">validate</a>
+					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
 					<li class=" tsd-kind-class tsd-parent-kind-module">
 						<a href="../classes/transaction.account.html" class="tsd-kind-icon">Account</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-module">
-						<a href="transaction.html#balancehandler" class="tsd-kind-icon">balance<wbr>Handler</a>
 					</li>
 				</ul>
 			</nav>
@@ -184,7 +133,9 @@
 			<ul class="tsd-legend">
 				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
 				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
+				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
 				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
+				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
 			</ul>
 			<ul class="tsd-legend">
 				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>

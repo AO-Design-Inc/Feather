@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>BidInterface | Feather</title>
+	<title>ValidationRelease | Feather</title>
 	<meta name="description" content="Documentation for Feather">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -55,13 +55,13 @@
 					<a href="../modules.html">Feather</a>
 				</li>
 				<li>
-					<a href="../modules/interfaces.html">interfaces</a>
+					<a href="../modules/validate.html">validate</a>
 				</li>
 				<li>
-					<a href="interfaces.bidinterface.html">BidInterface</a>
+					<a href="validate.validationrelease.html">ValidationRelease</a>
 				</li>
 			</ul>
-			<h1>Interface BidInterface</h1>
+			<h1>Interface ValidationRelease</h1>
 		</div>
 	</div>
 </header>
@@ -72,7 +72,12 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">BidInterface</span>
+						<span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><a href="validate.validationlock.html" class="tsd-signature-type" data-tsd-kind="Interface">ValidationLock</a><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">&quot;_discriminator&quot;</span><span class="tsd-signature-symbol">&gt;</span>
+						<ul class="tsd-hierarchy">
+							<li>
+								<span class="target">ValidationRelease</span>
+							</li>
+						</ul>
 					</li>
 				</ul>
 			</section>
@@ -83,8 +88,10 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="interfaces.bidinterface.html#bidder" class="tsd-kind-icon">bidder</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="interfaces.bidinterface.html#quantity" class="tsd-kind-icon">quantity</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="validate.validationrelease.html#_discriminator" class="tsd-kind-icon">_discriminator</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="validate.validationrelease.html#encrypted_obj" class="tsd-kind-icon">encrypted_<wbr>obj</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="validate.validationrelease.html#symm_key" class="tsd-kind-icon">symm_<wbr>key</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="validate.validationrelease.html#validator" class="tsd-kind-icon">validator</a></li>
 							</ul>
 						</section>
 					</div>
@@ -93,22 +100,44 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="bidder" class="tsd-anchor"></a>
-					<h3>bidder</h3>
-					<div class="tsd-signature tsd-kind-icon">bidder<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<a name="_discriminator" class="tsd-anchor"></a>
+					<h3>_discriminator</h3>
+					<div class="tsd-signature tsd-kind-icon">_discriminator<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">&quot;release&quot;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/interfaces.ts#L121">interfaces.ts:121</a></li>
+							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/validate.ts#L46">validate.ts:46</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
+					<a name="encrypted_obj" class="tsd-anchor"></a>
+					<h3>encrypted_<wbr>obj</h3>
+					<div class="tsd-signature tsd-kind-icon">encrypted_<wbr>obj<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<p>Inherited from Omit.encrypted_obj</p>
+						<ul>
+							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/validate.ts#L41">validate.ts:41</a></li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="quantity" class="tsd-anchor"></a>
-					<h3>quantity</h3>
-					<div class="tsd-signature tsd-kind-icon">quantity<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<a name="symm_key" class="tsd-anchor"></a>
+					<h3>symm_<wbr>key</h3>
+					<div class="tsd-signature tsd-kind-icon">symm_<wbr>key<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/interfaces.ts#L120">interfaces.ts:120</a></li>
+							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/validate.ts#L47">validate.ts:47</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
+					<a name="validator" class="tsd-anchor"></a>
+					<h3>validator</h3>
+					<div class="tsd-signature tsd-kind-icon">validator<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<p>Inherited from Omit.validator</p>
+						<ul>
+							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/validate.ts#L34">validate.ts:34</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -129,7 +158,7 @@
 					<li class=" tsd-kind-module">
 						<a href="../modules/executable.html">executable</a>
 					</li>
-					<li class="current tsd-kind-module">
+					<li class=" tsd-kind-module">
 						<a href="../modules/interfaces.html">interfaces</a>
 					</li>
 					<li class=" tsd-kind-module">
@@ -138,111 +167,66 @@
 					<li class=" tsd-kind-module">
 						<a href="../modules/utils.html">utils</a>
 					</li>
-					<li class=" tsd-kind-module">
+					<li class="current tsd-kind-module">
 						<a href="../modules/validate.html">validate</a>
 					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-enum tsd-parent-kind-module">
-						<a href="../enums/interfaces.accountfunctions.html" class="tsd-kind-icon">Account<wbr>Functions</a>
+					<li class=" tsd-kind-class tsd-parent-kind-module">
+						<a href="../classes/validate.validationannouncestate.html" class="tsd-kind-icon">Validation<wbr>Announce<wbr>State</a>
 					</li>
-					<li class=" tsd-kind-enum tsd-parent-kind-module">
-						<a href="../enums/interfaces.executablekinds.html" class="tsd-kind-icon">Executable<wbr>Kinds</a>
+					<li class=" tsd-kind-class tsd-parent-kind-module">
+						<a href="../classes/validate.validationlockstate.html" class="tsd-kind-icon">Validation<wbr>Lock<wbr>State</a>
 					</li>
-					<li class=" tsd-kind-enum tsd-parent-kind-module">
-						<a href="../enums/interfaces.getfunctions.html" class="tsd-kind-icon">Get<wbr>Functions</a>
+					<li class=" tsd-kind-class tsd-parent-kind-module">
+						<a href="../classes/validate.validationreleasestate.html" class="tsd-kind-icon">Validation<wbr>Release<wbr>State</a>
 					</li>
-					<li class=" tsd-kind-enum tsd-parent-kind-module">
-						<a href="../enums/interfaces.setfunctions.html" class="tsd-kind-icon">Set<wbr>Functions</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module">
-						<a href="interfaces.acceptedbidinput.html" class="tsd-kind-icon">Accepted<wbr>Bid<wbr>Input</a>
+					<li class=" tsd-kind-class tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="../classes/validate.validationstate.html" class="tsd-kind-icon">Validation<wbr>State</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module">
-						<a href="interfaces.accountinterface.html" class="tsd-kind-icon">Account<wbr>Interface</a>
+						<a href="validate.validationannounce.html" class="tsd-kind-icon">Validation<wbr>Announce</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module">
-						<a href="interfaces.actioninterface.html" class="tsd-kind-icon">Action<wbr>Interface</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module">
-						<a href="interfaces.bidinput.html" class="tsd-kind-icon">Bid<wbr>Input</a>
+						<a href="validate.validationlock.html" class="tsd-kind-icon">Validation<wbr>Lock</a>
 					</li>
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-module">
-						<a href="interfaces.bidinterface.html" class="tsd-kind-icon">Bid<wbr>Interface</a>
+						<a href="validate.validationrelease.html" class="tsd-kind-icon">Validation<wbr>Release</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="interfaces.bidinterface.html#bidder" class="tsd-kind-icon">bidder</a>
+								<a href="validate.validationrelease.html#_discriminator" class="tsd-kind-icon">_discriminator</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
+								<a href="validate.validationrelease.html#encrypted_obj" class="tsd-kind-icon">encrypted_<wbr>obj</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="interfaces.bidinterface.html#quantity" class="tsd-kind-icon">quantity</a>
+								<a href="validate.validationrelease.html#symm_key" class="tsd-kind-icon">symm_<wbr>key</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
+								<a href="validate.validationrelease.html#validator" class="tsd-kind-icon">validator</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
-					<li class=" tsd-kind-interface tsd-parent-kind-module">
-						<a href="interfaces.getproposedexecutableinput.html" class="tsd-kind-icon">Get<wbr>Proposed<wbr>Executable<wbr>Input</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module">
-						<a href="interfaces.inputinterface.html" class="tsd-kind-icon">Input<wbr>Interface</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module">
-						<a href="interfaces.proposedexecutableinput.html" class="tsd-kind-icon">Proposed<wbr>Executable<wbr>Input</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module">
-						<a href="interfaces.resultinput.html" class="tsd-kind-icon">Result<wbr>Input</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module">
-						<a href="interfaces.stateinterface.html" class="tsd-kind-icon">State<wbr>Interface</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module">
-						<a href="interfaces.validationlockinput.html" class="tsd-kind-icon">Validation<wbr>Lock<wbr>Input</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module">
-						<a href="interfaces.validationreleaseinput.html" class="tsd-kind-icon">Validation<wbr>Release<wbr>Input</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module">
-						<a href="interfaces.vaultinterface.html" class="tsd-kind-icon">Vault<wbr>Interface</a>
+					<li class=" tsd-kind-type-alias tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="../modules/validate.html#validationlinkedlist" class="tsd-kind-icon">Validation<wbr>Linked<wbr>List</a>
 					</li>
 					<li class=" tsd-kind-type-alias tsd-parent-kind-module">
-						<a href="../modules/interfaces.html#arweaveaddress" class="tsd-kind-icon">Arweave<wbr>Address</a>
+						<a href="../modules/validate.html#validationstages" class="tsd-kind-icon">Validation<wbr>Stages</a>
 					</li>
-					<li class=" tsd-kind-type-alias tsd-parent-kind-module">
-						<a href="../modules/interfaces.html#contracthandleroutput" class="tsd-kind-icon">Contract<wbr>Handler<wbr>Output</a>
-					</li>
-					<li class=" tsd-kind-type-alias tsd-parent-kind-module">
-						<a href="../modules/interfaces.html#inputtype" class="tsd-kind-icon">Input<wbr>Type</a>
-					</li>
-					<li class=" tsd-kind-type-alias tsd-parent-kind-module">
-						<a href="../modules/interfaces.html#resultinterface" class="tsd-kind-icon">Result<wbr>Interface</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-module">
-						<a href="../modules/interfaces.html#acceptedbidinputproxy" class="tsd-kind-icon">Accepted<wbr>Bid<wbr>Input<wbr>Proxy</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-module">
-						<a href="../modules/interfaces.html#bidinputproxy" class="tsd-kind-icon">Bid<wbr>Input<wbr>Proxy</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-module">
-						<a href="../modules/interfaces.html#proposedexecutableinputproxy" class="tsd-kind-icon">Proposed<wbr>Executable<wbr>Input<wbr>Proxy</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-module">
-						<a href="../modules/interfaces.html#resultinputproxy" class="tsd-kind-icon">Result<wbr>Input<wbr>Proxy</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-module">
-						<a href="../modules/interfaces.html#validationlockinputproxy" class="tsd-kind-icon">Validation<wbr>Lock<wbr>Input<wbr>Proxy</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-module">
-						<a href="../modules/interfaces.html#validationreleaseinputproxy" class="tsd-kind-icon">Validation<wbr>Release<wbr>Input<wbr>Proxy</a>
+					<li class=" tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="../modules/validate.html#isvalidationlinkedlisttype" class="tsd-kind-icon">is<wbr>Validation<wbr>Linked<wbr>List<wbr>Type</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-module">
-						<a href="../modules/interfaces.html#isarweaveaddress" class="tsd-kind-icon">is<wbr>Arweave<wbr>Address</a>
+						<a href="../modules/validate.html#validationannouncedtolocked" class="tsd-kind-icon">validation<wbr>Announced<wbr>ToLocked</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-module">
-						<a href="../modules/interfaces.html#isvalidbid" class="tsd-kind-icon">is<wbr>Valid<wbr>Bid</a>
+						<a href="../modules/validate.html#validationlockedtoreleased" class="tsd-kind-icon">validation<wbr>Locked<wbr>ToReleased</a>
 					</li>
 				</ul>
 			</nav>

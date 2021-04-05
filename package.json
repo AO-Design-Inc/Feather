@@ -4,6 +4,7 @@
 		"build-ts": "node build.js"
 	},
 	"devDependencies": {
+		"arweave": "^1.10.13",
 		"esbuild": "^0.8.37",
 		"prettier": "2.2.1",
 		"typedoc": "^0.20.20",

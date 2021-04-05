@@ -105,10 +105,19 @@
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
+							<h3>Accessors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="transaction.account.html#_value" class="tsd-kind-icon">_value</a></li>
+								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="transaction.account.html#balance" class="tsd-kind-icon">balance</a></li>
+								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="transaction.account.html#valid_vaults" class="tsd-kind-icon">valid_<wbr>vaults</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
 							<h3>Methods</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="transaction.account.html#add_vault" class="tsd-kind-icon">add_<wbr>vault</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="transaction.account.html#adj_balance" class="tsd-kind-icon">adj_<wbr>balance</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="transaction.account.html#burn" class="tsd-kind-icon">burn</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="transaction.account.html#consume" class="tsd-kind-icon">consume</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="transaction.account.html#increase_balance" class="tsd-kind-icon">increase_<wbr>balance</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="transaction.account.html#remove_vault" class="tsd-kind-icon">remove_<wbr>vault</a></li>
 							</ul>
@@ -128,7 +137,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/f9df34a/src/transaction.ts#L24">transaction.ts:24</a></li>
+									<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/transaction.ts#L26">transaction.ts:26</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -153,7 +162,7 @@
 					<div class="tsd-signature tsd-kind-icon">block_<wbr>height<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/f9df34a/src/transaction.ts#L24">transaction.ts:24</a></li>
+							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/transaction.ts#L26">transaction.ts:26</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -165,12 +174,67 @@
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="value" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> value</h3>
-					<div class="tsd-signature tsd-kind-icon">value<span class="tsd-signature-symbol">:</span> <a href="../interfaces/interfaces.accountinterface.html" class="tsd-signature-type" data-tsd-kind="Interface">AccountInterface</a></div>
+					<div class="tsd-signature tsd-kind-icon">value<span class="tsd-signature-symbol">:</span> <a href="../interfaces/interfaces.accountinterface.html" class="tsd-signature-type" data-tsd-kind="Interface">AccountInterface</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Required</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/interfaces.accountinterface.html" class="tsd-signature-type" data-tsd-kind="Interface">AccountInterface</a><span class="tsd-signature-symbol">&gt;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/f9df34a/src/transaction.ts#L22">transaction.ts:22</a></li>
+							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/transaction.ts#L24">transaction.ts:24</a></li>
 						</ul>
 					</aside>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Accessors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
+					<a name="_value" class="tsd-anchor"></a>
+					<h3>_value</h3>
+					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> _value<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/interfaces.accountinterface.html" class="tsd-signature-type" data-tsd-kind="Interface">AccountInterface</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Required</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/interfaces.accountinterface.html" class="tsd-signature-type" data-tsd-kind="Interface">AccountInterface</a><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/transaction.ts#L79">transaction.ts:79</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/interfaces.accountinterface.html" class="tsd-signature-type" data-tsd-kind="Interface">AccountInterface</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Required</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/interfaces.accountinterface.html" class="tsd-signature-type" data-tsd-kind="Interface">AccountInterface</a><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
+					<a name="balance" class="tsd-anchor"></a>
+					<h3>balance</h3>
+					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> balance<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/transaction.ts#L59">transaction.ts:59</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+							<p>adjusted balance, ie, deducts all valid vaults.</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
+					<a name="valid_vaults" class="tsd-anchor"></a>
+					<h3>valid_<wbr>vaults</h3>
+					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> valid_vaults<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/interfaces.vaultinterface.html" class="tsd-signature-type" data-tsd-kind="Interface">VaultInterface</a><span class="tsd-signature-symbol">[]</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/transaction.ts#L48">transaction.ts:48</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/interfaces.vaultinterface.html" class="tsd-signature-type" data-tsd-kind="Interface">VaultInterface</a><span class="tsd-signature-symbol">[]</span></h4>
+						</li>
+					</ul>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
@@ -185,7 +249,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/f9df34a/src/transaction.ts#L61">transaction.ts:61</a></li>
+									<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/transaction.ts#L88">transaction.ts:88</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -208,20 +272,42 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="adj_balance" class="tsd-anchor"></a>
-					<h3>adj_<wbr>balance</h3>
+					<a name="burn" class="tsd-anchor"></a>
+					<h3>burn</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">adj_<wbr>balance<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon">burn<span class="tsd-signature-symbol">(</span>proportion<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/f9df34a/src/transaction.ts#L44">transaction.ts:44</a></li>
+									<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/transaction.ts#L44">transaction.ts:44</a></li>
 								</ul>
 							</aside>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
-							<p>adjusted balance, ie, deducts all valid vaults.</p>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>proportion: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="consume" class="tsd-anchor"></a>
+					<h3>consume</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">consume<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/interfaces.accountinterface.html" class="tsd-signature-type" data-tsd-kind="Interface">AccountInterface</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Required</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/interfaces.accountinterface.html" class="tsd-signature-type" data-tsd-kind="Interface">AccountInterface</a><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/transaction.ts#L74">transaction.ts:74</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/interfaces.accountinterface.html" class="tsd-signature-type" data-tsd-kind="Interface">AccountInterface</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Required</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/interfaces.accountinterface.html" class="tsd-signature-type" data-tsd-kind="Interface">AccountInterface</a><span class="tsd-signature-symbol">&gt;</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -229,13 +315,13 @@
 					<a name="increase_balance" class="tsd-anchor"></a>
 					<h3>increase_<wbr>balance</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">increase_<wbr>balance<span class="tsd-signature-symbol">(</span>amount<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+						<li class="tsd-signature tsd-kind-icon">increase_<wbr>balance<span class="tsd-signature-symbol">(</span>from_account<span class="tsd-signature-symbol">: </span><a href="transaction.account.html" class="tsd-signature-type" data-tsd-kind="Class">Account</a>, amount<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/f9df34a/src/transaction.ts#L100">transaction.ts:100</a></li>
+									<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/transaction.ts#L128">transaction.ts:128</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -248,6 +334,9 @@
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
+								<li>
+									<h5>from_account: <a href="transaction.account.html" class="tsd-signature-type" data-tsd-kind="Class">Account</a></h5>
+								</li>
 								<li>
 									<h5>amount: <span class="tsd-signature-type">number</span></h5>
 									<div class="tsd-comment tsd-typography">
@@ -263,13 +352,13 @@
 					<a name="remove_vault" class="tsd-anchor"></a>
 					<h3>remove_<wbr>vault</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">remove_<wbr>vault<span class="tsd-signature-symbol">(</span>amount<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>deduct_balance<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol"> }</span></li>
+						<li class="tsd-signature tsd-kind-icon">remove_<wbr>vault<span class="tsd-signature-symbol">(</span>amount<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/f9df34a/src/transaction.ts#L80">transaction.ts:80</a></li>
+									<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/transaction.ts#L109">transaction.ts:109</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -286,26 +375,8 @@
 									<h5>amount: <span class="tsd-signature-type">number</span></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-symbol">{ </span>deduct_balance<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol"> }</span></h4>
-							<p>Object with a method to deduct balance of amount of vault
-							removed.</p>
-							<ul class="tsd-parameters">
-								<li class="tsd-parameter">
-									<h5>deduct_<wbr>balance<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></h5>
-									<ul class="tsd-parameters">
-										<li class="tsd-parameter-signature">
-											<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-type-literal">
-												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
-											</ul>
-											<ul class="tsd-descriptions">
-												<li class="tsd-description">
-													<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
-												</li>
-											</ul>
-										</li>
-									</ul>
-								</li>
-							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+							<p>Promise</p>
 						</li>
 					</ul>
 				</section>
@@ -318,6 +389,9 @@
 						<a href="../modules.html">Exports</a>
 					</li>
 					<li class=" tsd-kind-module">
+						<a href="../modules/constants.html">constants</a>
+					</li>
+					<li class=" tsd-kind-module">
 						<a href="../modules/contract.html">contract</a>
 					</li>
 					<li class=" tsd-kind-module">
@@ -328,6 +402,12 @@
 					</li>
 					<li class="current tsd-kind-module">
 						<a href="../modules/transaction.html">transaction</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/utils.html">utils</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/validate.html">validate</a>
 					</li>
 				</ul>
 			</nav>
@@ -347,11 +427,23 @@
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="transaction.account.html#value" class="tsd-kind-icon">value</a>
 							</li>
+							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
+								<a href="transaction.account.html#_value" class="tsd-kind-icon">_value</a>
+							</li>
+							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
+								<a href="transaction.account.html#balance" class="tsd-kind-icon">balance</a>
+							</li>
+							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
+								<a href="transaction.account.html#valid_vaults" class="tsd-kind-icon">valid_<wbr>vaults</a>
+							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="transaction.account.html#add_vault" class="tsd-kind-icon">add_<wbr>vault</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
-								<a href="transaction.account.html#adj_balance" class="tsd-kind-icon">adj_<wbr>balance</a>
+								<a href="transaction.account.html#burn" class="tsd-kind-icon">burn</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="transaction.account.html#consume" class="tsd-kind-icon">consume</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="transaction.account.html#increase_balance" class="tsd-kind-icon">increase_<wbr>balance</a>
@@ -363,9 +455,6 @@
 					</li>
 				</ul>
 				<ul class="after-current">
-					<li class=" tsd-kind-function tsd-parent-kind-module">
-						<a href="../modules/transaction.html#balancehandler" class="tsd-kind-icon">balance<wbr>Handler</a>
-					</li>
 				</ul>
 			</nav>
 		</div>
@@ -376,16 +465,18 @@
 		<h2>Legend</h2>
 		<div class="tsd-legend-group">
 			<ul class="tsd-legend">
+				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
+				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
+				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
+				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
+				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
+			</ul>
+			<ul class="tsd-legend">
 				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
 				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
 				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
 				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
 				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
-				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
-				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
 			</ul>
 			<ul class="tsd-legend">
 				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>

@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>ProposedExecutable | Feather</title>
+	<title>ValidatedExecutable | Feather</title>
 	<meta name="description" content="Documentation for Feather">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -58,10 +58,10 @@
 					<a href="../modules/executable.html">executable</a>
 				</li>
 				<li>
-					<a href="executable.proposedexecutable.html">ProposedExecutable</a>
+					<a href="executable.validatedexecutable.html">ValidatedExecutable</a>
 				</li>
 			</ul>
-			<h1>Interface ProposedExecutable</h1>
+			<h1>Interface ValidatedExecutable</h1>
 		</div>
 	</div>
 </header>
@@ -72,7 +72,12 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">ProposedExecutable</span>
+						<span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><a href="executable.resultexecutable.html" class="tsd-signature-type" data-tsd-kind="Interface">ResultExecutable</a><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">&quot;_discriminator&quot;</span><span class="tsd-signature-symbol">&gt;</span>
+						<ul class="tsd-hierarchy">
+							<li>
+								<span class="target">ValidatedExecutable</span>
+							</li>
+						</ul>
 					</li>
 				</ul>
 			</section>
@@ -83,10 +88,14 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="executable.proposedexecutable.html#_discriminator" class="tsd-kind-icon">_discriminator</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="executable.proposedexecutable.html#bids" class="tsd-kind-icon">bids</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="executable.proposedexecutable.html#caller" class="tsd-kind-icon">caller</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="executable.proposedexecutable.html#executable" class="tsd-kind-icon">executable</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="executable.validatedexecutable.html#_discriminator" class="tsd-kind-icon">_discriminator</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="executable.validatedexecutable.html#accepted_bid" class="tsd-kind-icon">accepted_<wbr>bid</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="executable.validatedexecutable.html#bids" class="tsd-kind-icon">bids</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="executable.validatedexecutable.html#caller" class="tsd-kind-icon">caller</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="executable.validatedexecutable.html#executable" class="tsd-kind-icon">executable</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="executable.validatedexecutable.html#is_correct" class="tsd-kind-icon">is_<wbr>correct</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="executable.validatedexecutable.html#result" class="tsd-kind-icon">result</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="executable.validatedexecutable.html#validation_linked_list" class="tsd-kind-icon">validation_<wbr>linked_<wbr>list</a></li>
 							</ul>
 						</section>
 					</div>
@@ -97,40 +106,86 @@
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="_discriminator" class="tsd-anchor"></a>
 					<h3>_discriminator</h3>
-					<div class="tsd-signature tsd-kind-icon">_discriminator<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">&quot;proposed&quot;</span></div>
+					<div class="tsd-signature tsd-kind-icon">_discriminator<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">&quot;validated&quot;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/executable.ts#L401">executable.ts:401</a></li>
+							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/executable.ts#L427">executable.ts:427</a></li>
 						</ul>
 					</aside>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
+					<a name="accepted_bid" class="tsd-anchor"></a>
+					<h3>accepted_<wbr>bid</h3>
+					<div class="tsd-signature tsd-kind-icon">accepted_<wbr>bid<span class="tsd-signature-symbol">:</span> <a href="interfaces.bidinterface.html" class="tsd-signature-type" data-tsd-kind="Interface">BidInterface</a></div>
+					<aside class="tsd-sources">
+						<p>Inherited from Omit.accepted_bid</p>
+						<ul>
+							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/executable.ts#L416">executable.ts:416</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
 					<a name="bids" class="tsd-anchor"></a>
 					<h3>bids</h3>
 					<div class="tsd-signature tsd-kind-icon">bids<span class="tsd-signature-symbol">:</span> <a href="interfaces.bidinterface.html" class="tsd-signature-type" data-tsd-kind="Interface">BidInterface</a><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
+						<p>Inherited from Omit.bids</p>
 						<ul>
 							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/executable.ts#L404">executable.ts:404</a></li>
 						</ul>
 					</aside>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
 					<a name="caller" class="tsd-anchor"></a>
 					<h3>caller</h3>
 					<div class="tsd-signature tsd-kind-icon">caller<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
+						<p>Inherited from Omit.caller</p>
 						<ul>
 							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/executable.ts#L403">executable.ts:403</a></li>
 						</ul>
 					</aside>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
 					<a name="executable" class="tsd-anchor"></a>
 					<h3>executable</h3>
 					<div class="tsd-signature tsd-kind-icon">executable<span class="tsd-signature-symbol">:</span> <a href="executable.executableinterface.html" class="tsd-signature-type" data-tsd-kind="Interface">ExecutableInterface</a></div>
 					<aside class="tsd-sources">
+						<p>Inherited from Omit.executable</p>
 						<ul>
 							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/executable.ts#L402">executable.ts:402</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="is_correct" class="tsd-anchor"></a>
+					<h3>is_<wbr>correct</h3>
+					<div class="tsd-signature tsd-kind-icon">is_<wbr>correct<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/executable.ts#L428">executable.ts:428</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
+					<a name="result" class="tsd-anchor"></a>
+					<h3>result</h3>
+					<div class="tsd-signature tsd-kind-icon">result<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ExecResultInterface</span></div>
+					<aside class="tsd-sources">
+						<p>Inherited from Omit.result</p>
+						<ul>
+							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/executable.ts#L422">executable.ts:422</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
+					<a name="validation_linked_list" class="tsd-anchor"></a>
+					<h3>validation_<wbr>linked_<wbr>list</h3>
+					<div class="tsd-signature tsd-kind-icon">validation_<wbr>linked_<wbr>list<span class="tsd-signature-symbol">:</span> <a href="../modules/utils.html#linkedlist" class="tsd-signature-type" data-tsd-kind="Type alias">LinkedList</a><span class="tsd-signature-symbol">&lt;</span><a href="../modules/validate.html#validationstages" class="tsd-signature-type" data-tsd-kind="Type alias">ValidationStages</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></div>
+					<aside class="tsd-sources">
+						<p>Inherited from Omit.validation_linked_list</p>
+						<ul>
+							<li>Defined in <a href="https://github.com/pretentious7/Feather/blob/cae5f9d/src/executable.ts#L423">executable.ts:423</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -185,33 +240,45 @@
 					<li class=" tsd-kind-interface tsd-parent-kind-module">
 						<a href="executable.executableinterface.html" class="tsd-kind-icon">Executable<wbr>Interface</a>
 					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module">
+						<a href="executable.proposedexecutable.html" class="tsd-kind-icon">Proposed<wbr>Executable</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module">
+						<a href="executable.resultexecutable.html" class="tsd-kind-icon">Result<wbr>Executable</a>
+					</li>
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-module">
-						<a href="executable.proposedexecutable.html" class="tsd-kind-icon">Proposed<wbr>Executable</a>
+						<a href="executable.validatedexecutable.html" class="tsd-kind-icon">Validated<wbr>Executable</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="executable.proposedexecutable.html#_discriminator" class="tsd-kind-icon">_discriminator</a>
+								<a href="executable.validatedexecutable.html#_discriminator" class="tsd-kind-icon">_discriminator</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
+								<a href="executable.validatedexecutable.html#accepted_bid" class="tsd-kind-icon">accepted_<wbr>bid</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
+								<a href="executable.validatedexecutable.html#bids" class="tsd-kind-icon">bids</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
+								<a href="executable.validatedexecutable.html#caller" class="tsd-kind-icon">caller</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
+								<a href="executable.validatedexecutable.html#executable" class="tsd-kind-icon">executable</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="executable.proposedexecutable.html#bids" class="tsd-kind-icon">bids</a>
+								<a href="executable.validatedexecutable.html#is_correct" class="tsd-kind-icon">is_<wbr>correct</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="executable.proposedexecutable.html#caller" class="tsd-kind-icon">caller</a>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
+								<a href="executable.validatedexecutable.html#result" class="tsd-kind-icon">result</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="executable.proposedexecutable.html#executable" class="tsd-kind-icon">executable</a>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
+								<a href="executable.validatedexecutable.html#validation_linked_list" class="tsd-kind-icon">validation_<wbr>linked_<wbr>list</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
-					<li class=" tsd-kind-interface tsd-parent-kind-module">
-						<a href="executable.resultexecutable.html" class="tsd-kind-icon">Result<wbr>Executable</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-module">
-						<a href="executable.validatedexecutable.html" class="tsd-kind-icon">Validated<wbr>Executable</a>
-					</li>
 					<li class=" tsd-kind-type-alias tsd-parent-kind-module">
 						<a href="../modules/executable.html#executablestates" class="tsd-kind-icon">Executable<wbr>States</a>
 					</li>
