@@ -55,6 +55,9 @@ import {
 	lastElementArray,
 	lastElementArrayIndex
 } from './utils';
+import {
+	START_BLOCK
+} from './constants';
 
 function getValidators(
 	state: StateInterface
@@ -126,7 +129,10 @@ export async function handle(
 			return {state};
 		}
 
-		// Process a bid on an executable.
+		/** Process bids on executable, this case checks to make sure
+		 * that the bid is under the value of the current max price,
+		 * which is given by a straight line increasing from min price.
+		 */
 		case 'bid': {
 			const inputProxy: BidInput = new Proxy(
 				action.input,
@@ -232,6 +238,19 @@ export async function handle(
 			] = result_exec.consume();
 			return {state};
 		}
+
+		/*
+		case 'validate_bid': {
+			const inputProxy: ValidationBidInput = new Proxy(
+				action.input,
+				ValidationBidInputProxy
+			);
+
+			const ref_exec = state.executables[inputProxy.executable_key];
+			const result_exec = new ResultState;
+			return {state};
+		}
+		*/
 
 		case 'validate_lock': {
 			const inputProxy: ValidationLockInput = new Proxy(

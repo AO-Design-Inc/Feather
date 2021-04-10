@@ -317,6 +317,10 @@ export class ResultState extends ExecutableState<ResultExecutable> {
 	}
 }
 
+// Before ValidatedState, ResultState should take ValidationBids for the
+// creation of a validation bidding pool. This mechanism ensures that
+// validators are not underpaid
+
 export class ValidatedState extends ExecutableState<ValidatedExecutable> {
 	validations: ValidationReleaseState[][];
 
@@ -414,6 +418,13 @@ export interface AcceptedExecutable
 	extends Omit<ProposedExecutable, '_discriminator'> {
 	_discriminator: 'accepted';
 	accepted_bid: BidInterface;
+}
+
+export interface TrueResultExecutable
+	extends Omit<AcceptedExecutable, '_discriminator'> {
+	_discriminator: 'result';
+	result: ExecResultInterface;
+	validation_bid_pool: Array<Required<AccountInterface>>;
 }
 
 export interface ResultExecutable

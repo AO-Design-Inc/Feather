@@ -43,7 +43,7 @@ export enum SetFunctions {
 
 	result = 'result',
 
-	validate = 'validate',
+	validate = 'validate_bid',
 
 	validate_lock = 'validate_lock',
 
