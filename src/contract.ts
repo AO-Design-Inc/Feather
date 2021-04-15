@@ -10,16 +10,13 @@ import {Account} from './transaction';
 declare const ContractAssert: <T extends boolean>(
 	cond: T,
 	message: string
-) => T extends true ? string : never;
+) => asserts cond;
 import {
 	ArweaveAddress,
 	AccountInterface,
 	ProposedExecutableInputProxy,
-	ProposedExecutableInput,
 	BidInputProxy,
 	BidInput,
-	AcceptedBidInput,
-	AcceptedBidInputProxy,
 	ResultInput,
 	ResultInputProxy,
 	ValidationLockInput,
@@ -31,33 +28,21 @@ import {
 	ContractHandlerOutput
 } from './interfaces';
 import {
-	ExecutableStates,
 	ProposedExecutable,
-	AcceptedExecutable,
 	ProposedState,
 	AcceptedState,
-	ResultState,
-	ValidatedState,
-	ValidationStates,
 	proposedToAccepted,
-	acceptedToResult
+	ValidatedExecutable,
+	ResultExecutable
 } from './executable';
 import {
-	ValidationAnnounceState,
-	ValidationLockState,
-	ValidationReleaseState,
-	validationAnnouncedToLocked,
-	validationLockedToReleased
-} from './validate';
-
-import {
-	isOfDiscriminatedType,
-	lastElementArray,
-	lastElementArrayIndex
-} from './utils';
-import {
-	START_BLOCK
+	START_BLOCK,
+	END_BLOCK,
+	PROPORTION_OF_TOTAL_STAKE_FOR_EXECUTION,
+	PROPORTION_OF_PRICE_FOR_UPLOADERS_BONUS
 } from './constants';
+
+import {isOfDiscriminatedType} from './utils';
 
 function getValidators(
 	state: StateInterface
@@ -98,7 +83,7 @@ export async function handle(
 	switch (action.input.function) {
 		// Process proposing new executable.
 		case 'propose': {
-			const inputProxy: ProposedExecutableInput = new Proxy(
+			const inputProxy = new Proxy(
 				action.input,
 				ProposedExecutableInputProxy
 			);
@@ -108,8 +93,30 @@ export async function handle(
 			 * {@link ExecutableState} documentation for further
 			 * clarification.
 			 */
+
+			const proposer_account = new Account(
+				state.accounts,
+				action.caller
+			);
+			proposer_account.add_vault({
+				amount:
+					inputProxy.max_cost! +
+					PROPORTION_OF_PRICE_FOR_UPLOADERS_BONUS *
+						inputProxy.max_cost!,
+				start: START_BLOCK(),
+				end: END_BLOCK()
+			});
 			const proposed_exec = new ProposedState({
 				_discriminator: 'proposed',
+				// This needs to be type annotated as
+				// typescript doesn't catch the type narrowing in
+				// the proxy. an alternate way to get around
+				// this would be to set this as number in the
+				// interface even though it *can be undefined*
+				// and do the typeguard anyway, but that makes
+				// the interface a lot less clear.
+				start_cost: inputProxy.start_cost!,
+				max_cost: inputProxy.max_cost!,
 				bids: [],
 				caller: action.caller,
 				executable: {
@@ -122,10 +129,6 @@ export async function handle(
 			state.executables[SmartWeave.transaction.id] =
 				proposed_exec.value;
 
-			/** There should be a hash func from blockheight
-			 * and input hash to give exec key, don't make user pass it
-			 * bruh just take the transaction id, you idiot.
-			 */
 			return {state};
 		}
 
@@ -138,29 +141,91 @@ export async function handle(
 				action.input,
 				BidInputProxy
 			);
-			const ref_exec = new ProposedState(
-				state.executables[inputProxy.executable_key]
+			const ref_exec =
+				state.executables[inputProxy.executable_key] ?? undefined;
+
+			ContractAssert(
+				typeof ref_exec !== 'undefined',
+				'referenced executable does not exist'
 			);
-			ref_exec.value.bids.push({
+
+			const bidder = state.accounts[action.caller] ?? undefined;
+
+			ContractAssert(
+				typeof bidder !== 'undefined',
+				'caller does not have an account'
+			);
+
+			const proposed_exec = new ProposedState(ref_exec);
+			/* If bid is pushed while over current price, then
+			 * a transaction fee is attached to the bid and sent to
+			 * the regulator account */
+
+			ContractAssert(
+				typeof bidder.stake !== 'undefined',
+				'bidder is not an executor'
+			);
+
+			proposed_exec.value.bids.push({
 				bidder: action.caller,
-				quantity: inputProxy.quantity
+				quantity: inputProxy.quantity,
+				birth_height: START_BLOCK()
 			});
 
-			state.executables[inputProxy.executable_key] = ref_exec.value;
+			/* If bid is over reserve price it is just invalid,
+			 * should be checked in proxy */
+
+			/* If bid is timed such that it is under current price,
+			 * no fee is charged, and a bid under the current price
+			 * is picked randomly with weightage toward lower bids */
+
+			/* Arweave fee is paid by user through some sort of
+			 * ar representation eventually */
+
+			const TOTAL_STAKE = Object.entries(state.accounts).reduce(
+				(acc: number, cur) => acc + cur[1].stake!,
+				0
+			);
+
+			const validators = new Set(
+				proposed_exec.activeBids.map(
+					(_) =>
+						[_.bidder, state.accounts[_.bidder]] as [
+							string,
+							Required<AccountInterface>
+						]
+				)
+			);
+
+			const propToAcc = proposedToAccepted(validators);
+			const next_exec =
+				proposed_exec.activeBids.reduce(
+					(acc: number, cur) =>
+						acc + state.accounts[cur.bidder].stake!,
+					0
+				) >=
+				PROPORTION_OF_TOTAL_STAKE_FOR_EXECUTION * TOTAL_STAKE
+					? proposed_exec.next(propToAcc)
+					: proposed_exec;
+
+			state.executables[
+				inputProxy.executable_key
+			] = next_exec.consume();
+
 			return {state};
 		}
 
-		// Lets user who proposed executable accept a bid on an
-		// executable.
-		case 'accept': {
+		/*
+		Case 'accept': {
 			const inputProxy: AcceptedBidInput = new Proxy(
 				action.input,
 				AcceptedBidInputProxy
 			);
-			const ref_exec = state.executables[inputProxy.executable_key];
+			const ref_exec =
+				state.executables[inputProxy.executable_key] ?? undefined;
 
 			ContractAssert(
-				ref_exec.caller === action.caller,
+				ref_exec?.caller === action.caller,
 				`${action.caller} is not creator of proposal`
 			);
 
@@ -169,12 +234,6 @@ export async function handle(
 				proposedToAccepted(inputProxy)
 			);
 
-			/** {@link Account | Account class} used to
-			 * safely encapsulate all
-			 * transaction methods and ideas. Read the
-			 * documentation of the Account class for further
-			 * clarification.
-			 */
 			const accepter_account = new Account(
 				state.accounts,
 				ref_exec.caller
@@ -190,6 +249,7 @@ export async function handle(
 			state.accounts[ref_exec.caller] = accepter_account.value;
 			return {state};
 		}
+		*/
 
 		// Adds result to AcceptedExecutable from winning bidder,
 		// pays out money to them.
@@ -199,28 +259,38 @@ export async function handle(
 				action.input,
 				ResultInputProxy
 			);
-			const ref_exec = state.executables[inputProxy.executable_key];
-
-			// This right here is a code smell, I should probably
-			// make the monad bois just take present state and
-			// input so I dont have to do this weird dance
-			const accepted_exec = new AcceptedState(ref_exec);
+			const ref_exec = state.executables[
+				inputProxy.executable_key
+			] as ValidatedExecutable;
 
 			ContractAssert(
-				accepted_exec.accepted_bid.bidder === action.caller,
+				ref_exec.result_giver === action.caller,
 				'result not made by winning bidder!'
 			);
 
-			const validators = getValidators(state);
+			/** {@link Account | Account class} used to
+			 * safely encapsulate all
+			 * transaction methods and ideas. Read the
+			 * documentation of the Account class for further
+			 * clarification.
+			 *const result_giver_account = new Account(
+			 *	state.accounts,
+			 *	action.caller
+			 *);
+			 */
 
-			const result_giver_account = new Account(
-				state.accounts,
-				action.caller
-			);
+			const result_exec: ResultExecutable = {
+				...ref_exec,
+				result: {
+					address: inputProxy.result_address,
+					height: START_BLOCK(),
+					giver: action.caller
+				},
+				_discriminator: 'result'
+			};
 
-			accepted_exec.post_collateral(result_giver_account);
-
-			const result_exec = accepted_exec.next(
+			/*
+			Const result_exec = accepted_exec.next(
 				acceptedToResult(
 					inputProxy,
 					action.caller,
@@ -228,19 +298,18 @@ export async function handle(
 					state.accounts
 				)
 			);
+			*/
 
 			// Validate!
 			// Wait... There is no result executable, it IS the
 			// validating executable.
 
-			state.executables[
-				inputProxy.executable_key
-			] = result_exec.consume();
+			state.executables[inputProxy.executable_key] = result_exec;
 			return {state};
 		}
 
 		/*
-		case 'validate_bid': {
+		Case 'validate_bid': {
 			const inputProxy: ValidationBidInput = new Proxy(
 				action.input,
 				ValidationBidInputProxy
@@ -258,7 +327,7 @@ export async function handle(
 				ValidationLockInputProxy
 			);
 			const ref_exec = state.executables[inputProxy.executable_key];
-			const result_exec = new ResultState(ref_exec);
+			const result_exec = new AcceptedState(ref_exec);
 
 			// With Linked list we do this instead.
 
@@ -292,7 +361,7 @@ export async function handle(
 			);
 
 			const ref_exec = state.executables[inputProxy.executable_key];
-			const result_exec = new ResultState(ref_exec);
+			const result_exec = new AcceptedState(ref_exec);
 
 			if (
 				!result_exec.validation_tail.every(

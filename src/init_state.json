@@ -1,0 +1,21 @@
+{
+	"accounts": {
+		"regulator": {
+			"balance": 1000,
+			"vaults": []
+		},
+		"Pq6OBljxlpypNuE0O1eL92Kr9U1Ok4USfcc0aJcUAzs": {
+			"balance": 69,
+			"vaults": [],
+			"stake": 69
+		},
+		"DfCXDjdxcTIg1-FQDZ5jDclk1shKIpMlshe0IXodApc": {
+			"balance": 69,
+			"vaults": [],
+			"stake": 69
+		}
+	},
+	"executables": {},
+	"ticker": "FEA"
+}
+

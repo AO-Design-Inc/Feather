@@ -14,7 +14,7 @@ import {
 	ValidationLockInput,
 	ValidationReleaseInput
 } from './interfaces';
-import {Tuple, isOfDiscriminatedType, decipher} from './utils';
+import {isOfDiscriminatedType} from './utils';
 export type ValidationStages =
 	| ValidationAnnounce
 	| ValidationLock

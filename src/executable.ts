@@ -13,16 +13,12 @@ import {
 	ExecutableKinds,
 	ArweaveAddress,
 	BidInterface,
-	AcceptedBidInput,
-	ResultInput,
-	StateInterface,
 	AccountInterface,
 	ValidationLockInput,
 	ValidationReleaseInput
 } from './interfaces';
 import {
 	ValidationAnnounce,
-	ValidationLock,
 	ValidationRelease,
 	ValidationStages,
 	ValidationAnnounceState,
@@ -32,20 +28,21 @@ import {
 	validationLockedToReleased
 } from './validate';
 import {
-	lastElement,
 	getElements,
 	createLinkedList,
-	Tuple,
 	LinkedList,
 	isArrayOfDiscriminatedTypes,
 	isOfDiscriminatedType,
 	setDifference,
 	getWeightedProbabilityElement,
-	lastElementArray,
 	lastElementArrayIndex,
 	decipher,
-	removeElementByIndex
+	isArrayNonZero
 } from './utils';
+import {
+	PRICE_INCREASE_PER_BLOCK,
+	START_BLOCK
+} from './constants';
 import {Account} from './transaction';
 
 /**
@@ -108,15 +105,25 @@ export class ProposedState extends ExecutableState<ProposedExecutable> {
 
 		super(value);
 	}
+
+	/* The activeBids method gets bids that are valid for some blockheight. */
+	get activeBids() {
+		return this.value.bids.filter(
+			(_) => this.currentPrice >= _.quantity
+		);
+	}
+
+	/* The currentPrice getter accesses price of executable at some block
+	 * height */
+	get currentPrice() {
+		return (
+			this.value.start_cost +
+			(START_BLOCK() - this.value.executable.birth_height) *
+				PRICE_INCREASE_PER_BLOCK
+		);
+	}
 }
-
-const default_timings = () => {
-	return {
-		start: SmartWeave.block.height,
-		end: SmartWeave.block.height + 1000
-	};
-};
-
+/* Deprecated
 export class AcceptedState extends ExecutableState<AcceptedExecutable> {
 	constructor(value: ExecutableStates) {
 		if (
@@ -139,10 +146,12 @@ export class AcceptedState extends ExecutableState<AcceptedExecutable> {
 	post_collateral(result_giver_account: Account) {
 		result_giver_account.add_vault({
 			amount: 0.1 * this.accepted_bid.quantity,
-			...default_timings()
+			start: START_BLOCK(),
+			end: END_BLOCK()
 		});
 	}
 }
+*/
 
 export type ValidationStates =
 	| ValidationAnnounceState
@@ -164,13 +173,15 @@ function initialiseValidationState(
 	}
 }
 
-export class ResultState extends ExecutableState<ResultExecutable> {
+export class AcceptedState extends ExecutableState<AcceptedExecutable> {
 	// Could mayyybe use tuple
 	validations: ValidationStates[][];
 
 	constructor(value: ExecutableStates) {
-		if (!isOfDiscriminatedType<ResultExecutable>(value, 'result')) {
-			throw new ContractError('executable not in result state!');
+		if (
+			!isOfDiscriminatedType<AcceptedExecutable>(value, 'accepted')
+		) {
+			throw new ContractError('executable not in accepted state!');
 		}
 
 		super(value);
@@ -182,7 +193,15 @@ export class ResultState extends ExecutableState<ResultExecutable> {
 	//
 
 	get validation_tail() {
-		return this.validations[lastElementArrayIndex(this.validations)];
+		if (isArrayNonZero(this.validations)) {
+			return this.validations[
+				lastElementArrayIndex(this.validations)
+			];
+		}
+
+		throw new ContractError(
+			'validation tail does not exist if no validations'
+		);
 	}
 
 	get used_validators() {
@@ -284,36 +303,64 @@ export class ResultState extends ExecutableState<ResultExecutable> {
 			decipher([_.symm_key, _.encrypted_obj])
 		);
 
-		return Promise.all(deciphered_promises)
-			.then((deciphered) => {
-				const is_correct = JSON.parse(deciphered[0]).is_correct;
+		const deciphered_array = await Promise.all(deciphered_promises);
 
-				if (deciphered.every((_) => _ === deciphered[0])) {
-					return this.next(
-						() =>
-							new ValidatedState(
-								{
-									...this.consume(),
-									_discriminator: 'validated',
-									is_correct
-								},
-								accounts
-							)
-					);
-				}
+		if (deciphered_array.every((_) => _ === deciphered_array[0])) {
+			const correct_hash = deciphered_array[0];
+			const corr_validators = await this.correct_validators(
+				correct_hash
+			);
+			const resultGiverReturner = getWeightedProbabilityElement(
+				Number(SmartWeave.block.indep_hash)
+			);
+			const resultGiver = resultGiverReturner(
+				Array.from(corr_validators).map((_) => [_, 1])
+			);
 
-				this.validations.push(
-					generateValidators(
-						new Account(accounts, 'regulator'),
-						0.05 * this.value.accepted_bid.quantity,
-						this.allowed_validators(validators)
-					).map((_) => new ValidationAnnounceState(_))
-				);
-				return this;
-			})
-			.catch((error) => {
-				throw new ContractError(`${String(error)}`);
-			});
+			return this.next(
+				() =>
+					new ValidatedState(
+						{
+							...this.consume(),
+							result_giver: resultGiver,
+							_discriminator: 'validated'
+						},
+						accounts,
+						corr_validators
+					)
+			);
+		}
+
+		this.validations.push(
+			generateValidators(this.allowed_validators(validators)).map(
+				(_) => new ValidationAnnounceState(_)
+			)
+		);
+		return this;
+	}
+
+	private async correct_validators(correct_hash: string) {
+		const flat_validations = this.validations.flat();
+		if (
+			!isArrayOfDiscriminatedTypes<ValidationRelease>(
+				flat_validations,
+				'release'
+			)
+		) {
+			throw new ContractError(
+				'cannot branch if validations not released'
+			);
+		}
+
+		return flat_validations.reduce(
+			async (acc, cur: ValidationRelease) => {
+				return (await decipher([cur.symm_key, cur.encrypted_obj])) ===
+					correct_hash
+					? (await acc).concat([cur.validator])
+					: acc;
+			},
+			Promise.resolve([] as string[])
+		);
 	}
 }
 
@@ -325,73 +372,79 @@ export class ValidatedState extends ExecutableState<ValidatedExecutable> {
 	validations: ValidationReleaseState[][];
 
 	get validation_tail() {
-		return this.validations[lastElementArrayIndex(this.validations)];
+		if (isArrayNonZero(this.validations)) {
+			return this.validations[
+				lastElementArrayIndex(this.validations)
+			];
+		}
+
+		throw new ContractError(
+			'validation tail does not exist if no validations'
+		);
 	}
 
 	// Handle payments and punishments in constructor!
 	constructor(
 		value: ExecutableStates,
-		accounts: Record<ArweaveAddress, AccountInterface>
+		accounts: Record<ArweaveAddress, AccountInterface>,
+		correct_validators: ArweaveAddress[]
 	) {
+		const true_value = {...value, result_giver: 'me'};
 		if (
-			!isOfDiscriminatedType<ValidatedExecutable>(value, 'validated')
+			!isOfDiscriminatedType<ValidatedExecutable>(
+				true_value,
+				'validated'
+			)
 		) {
 			throw new ContractError('executable not in validated state!');
 		}
 
-		super(value);
+		super(true_value);
 
-		const regulator_account = new Account(accounts, 'regulator');
-		const result_giver_account = new Account(
-			accounts,
-			this.value.result.giver
-		);
 		this.validations = getElements(
 			this.value.validation_linked_list
 		).map((v) => v.value.map((_) => new ValidationReleaseState(_)));
 
+		const regulator_account = new Account(accounts, 'regulator');
+		const result_giver_account = new Account(
+			accounts,
+			this.value.result_giver
+		);
+
 		this.validations.flat().forEach(async (_) => {
-			// Decrypting validation_tail for every one of these is
-			// a lot of double work and should be eliminated, but I
-			// don't want to right indent this whole thing in a
-			// promiseand hopefully this won't run too much
-			// RESOLUTION: put both validation_tail[0] decrypt
-			// and this into different methods.
 			const validator_account = new Account(
 				accounts,
 				_.value.validator
 			);
-			if (
-				(await decipher([
-					_.value.symm_key,
-					_.value.encrypted_obj
-				])) ===
-				(await decipher([
-					this.validation_tail[0].value.symm_key,
-					this.validation_tail[0].value.encrypted_obj
-				]))
-			) {
+
+			if (correct_validators.includes(_.value.validator)) {
 				validator_account.increase_balance(
 					regulator_account,
-					0.05 * this.value.accepted_bid.quantity
+					0.5 * this.value.accepted_cost
 				);
 			} else {
 				validator_account.burn(0.5);
 			}
 		});
 
-		// Put all the proportionality nonsense in one big global enum
-		if (this.value.is_correct) {
-			result_giver_account.increase_balance(
-				new Account(accounts, this.value.caller),
-				this.value.accepted_bid.quantity
-			);
-		}
+		result_giver_account.increase_balance(regulator_account, 1);
 
-		regulator_account.increase_balance(
+		/*
+		Regulator_account.increase_balance(
 			result_giver_account,
 			0.1 * this.value.accepted_bid.quantity
 		);
+		*/
+	}
+}
+
+export class ResultState extends ExecutableState<ResultExecutable> {
+	constructor(value: ExecutableStates) {
+		if (!isOfDiscriminatedType<ResultExecutable>(value, 'result')) {
+			throw new ContractError('executable not in result state!');
+		}
+
+		super(value);
 	}
 }
 
@@ -406,6 +459,8 @@ export interface ProposedExecutable {
 	executable: ExecutableInterface;
 	caller: ArweaveAddress;
 	bids: BidInterface[];
+	start_cost: number;
+	max_cost: number;
 }
 
 interface ExecResultInterface {
@@ -417,26 +472,23 @@ interface ExecResultInterface {
 export interface AcceptedExecutable
 	extends Omit<ProposedExecutable, '_discriminator'> {
 	_discriminator: 'accepted';
-	accepted_bid: BidInterface;
-}
-
-export interface TrueResultExecutable
-	extends Omit<AcceptedExecutable, '_discriminator'> {
-	_discriminator: 'result';
-	result: ExecResultInterface;
-	validation_bid_pool: Array<Required<AccountInterface>>;
+	// Changing
+	// accepted_bid: BidInterface;
+	validation_linked_list: LinkedList<ValidationStages[]>;
+	accepted_cost: number;
 }
 
 export interface ResultExecutable
-	extends Omit<AcceptedExecutable, '_discriminator'> {
+	extends Omit<ValidatedExecutable, '_discriminator'> {
 	_discriminator: 'result';
 	result: ExecResultInterface;
-	validation_linked_list: LinkedList<ValidationStages[]>;
+	// Changing
+	// validation_linked_list: LinkedList<ValidationStages[]>;
 }
 export interface ValidatedExecutable
-	extends Omit<ResultExecutable, '_discriminator'> {
+	extends Omit<AcceptedExecutable, '_discriminator'> {
 	_discriminator: 'validated';
-	is_correct: boolean;
+	result_giver: ArweaveAddress;
 }
 
 // Use discriminator pattern.
@@ -452,9 +504,9 @@ export type StateMapsTo<
 > = T extends ProposedExecutable
 	? AcceptedExecutable
 	: T extends AcceptedExecutable
-	? ResultExecutable
-	: T extends ResultExecutable
 	? ValidatedExecutable
+	: T extends ValidatedExecutable
+	? ResultExecutable
 	: never;
 
 type InputApplier<T1 extends ExecutableStates> = (
@@ -462,7 +514,7 @@ type InputApplier<T1 extends ExecutableStates> = (
 ) => ExecutableState<StateMapsTo<T1>>;
 
 export function proposedToAccepted(
-	acc_input: AcceptedBidInput
+	validators: Set<[ArweaveAddress, Required<AccountInterface>]>
 ): InputApplier<ProposedExecutable> {
 	return (
 		i: ProposedExecutable
@@ -470,25 +522,18 @@ export function proposedToAccepted(
 		return new AcceptedState({
 			...i,
 			_discriminator: 'accepted',
-			accepted_bid: acc_input.accepted_bid
+			validation_linked_list: {
+				value: generateValidators(validators),
+				next: undefined
+			},
+			accepted_cost: new ProposedState(i).currentPrice
 		});
 	};
 }
 
 function generateValidators(
-	regulator: Account,
-	fee: number,
 	validators: Set<[ArweaveAddress, Required<AccountInterface>]>
 ): ValidationAnnounce[] {
-	// First apply holds on regulator account.
-	validators.forEach(() =>
-		regulator.add_vault({
-			amount: fee,
-			end: Number(SmartWeave.block.height) + 1000,
-			start: Number(SmartWeave.block.height)
-		})
-	);
-
 	const validatorReturner = getWeightedProbabilityElement(
 		Number(SmartWeave.block.indep_hash)
 	);
@@ -507,11 +552,10 @@ function generateValidators(
 	];
 }
 
+/*
 export function acceptedToResult(
 	result_input: ResultInput,
-	caller: ArweaveAddress,
-	validators: Set<[ArweaveAddress, Required<AccountInterface>]>,
-	accounts: Record<ArweaveAddress, AccountInterface>
+	caller: ArweaveAddress
 ): InputApplier<AcceptedExecutable> {
 	return (
 		i: AcceptedExecutable
@@ -519,14 +563,6 @@ export function acceptedToResult(
 		return new ResultState({
 			...i,
 			_discriminator: 'result',
-			validation_linked_list: {
-				value: generateValidators(
-					new Account(accounts, 'regulator'),
-					0.05 * i.accepted_bid.quantity,
-					validators
-				),
-				next: undefined
-			},
 			result: {
 				address: result_input.result_address,
 				giver: caller,
@@ -535,3 +571,4 @@ export function acceptedToResult(
 		});
 	};
 }
+*/

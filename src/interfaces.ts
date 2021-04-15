@@ -2,8 +2,9 @@ declare const ContractError: any;
 declare const ContractAssert: <T extends boolean>(
 	cond: T,
 	message: string
-) => T extends true ? string : never;
-import {ExecutableStates, ProposedExecutable} from './executable';
+) => asserts cond;
+import {ExecutableStates} from './executable';
+import {DEFAULT_MAX_PRICE} from './constants';
 
 export interface ActionInterface {
 	input: InputType;
@@ -39,11 +40,7 @@ export enum SetFunctions {
 
 	bid = 'bid',
 
-	accept = 'accept',
-
 	result = 'result',
-
-	validate = 'validate_bid',
 
 	validate_lock = 'validate_lock',
 
@@ -82,6 +79,9 @@ export interface ProposedExecutableInput extends InputInterface {
 	executable_kind: ExecutableKinds;
 	function: SetFunctions.propose;
 	input_to_executable?: ArweaveAddress;
+	// Default start cost to 0 if undefined
+	start_cost?: number;
+	max_cost?: number;
 }
 
 export const ProposedExecutableInputProxy: ProxyHandler<ProposedExecutableInput> = {
@@ -108,10 +108,60 @@ export const ProposedExecutableInputProxy: ProxyHandler<ProposedExecutableInput>
 					${target.executable_kind}
 					is not valid executable type
 					`);
+			case 'input_to_executable':
+				ContractAssert(
+					typeof target.input_to_executable !== 'undefined',
+					'No input to executable'
+				);
+				if (isArweaveAddress(target.input_to_executable)) {
+					return target.input_to_executable;
+				}
+
+				throw new ContractError('invalid input address');
+			case 'start_cost':
+				// Start cost defaults to 0
+
+				if (typeof target.start_cost === 'undefined') {
+					return 0;
+				}
+
+				ContractAssert(
+					typeof target.max_cost === 'number',
+					'max cost must be defined with start cost'
+				);
+
+				if (isValidBid(target.start_cost)) {
+					ContractAssert(
+						target.max_cost > target.start_cost,
+						'max cost must be greater than start cost'
+					);
+					return target.start_cost;
+				}
+
+				throw new ContractError('Invalid start cost');
+			case 'max_cost': {
+				ContractAssert(
+					typeof target.max_cost === 'number',
+					'max cost must be a number'
+				);
+
+				const start_cost = target.start_cost ?? 0;
+				const max_cost =
+					target.max_cost ?? start_cost + DEFAULT_MAX_PRICE;
+
+				if (isValidBid(max_cost)) {
+					ContractAssert(
+						max_cost > start_cost,
+						'max cost must be greater than start cost'
+					);
+					return max_cost;
+				}
+
+				throw new ContractError('Invalid max cost');
+			}
+
 			default:
-				throw new ContractError(`
-					${String(p)} is invalid key
-					`);
+				throw new ContractError('invalid key');
 		}
 	}
 };
@@ -119,6 +169,7 @@ export const ProposedExecutableInputProxy: ProxyHandler<ProposedExecutableInput>
 export interface BidInterface {
 	quantity: number;
 	bidder: ArweaveAddress;
+	birth_height: number;
 }
 
 type ValidBid = number;
@@ -162,11 +213,13 @@ export const BidInputProxy: ProxyHandler<BidInput> = {
 	}
 };
 
+/*
 export interface AcceptedBidInput extends InputInterface {
 	function: SetFunctions.accept;
 	accepted_bid: BidInterface;
 	executable_key: ArweaveAddress;
 }
+*/
 
 /* Possible state refactor
 type InputProxyFactory<T extends InputInterface> = (
@@ -175,6 +228,7 @@ type InputProxyFactory<T extends InputInterface> = (
 ) => ProxyHandler<T>;
 */
 
+/*
 export const AcceptedBidInputProxy: ProxyHandler<AcceptedBidInput> = {
 	get(target: AcceptedBidInput, p: keyof AcceptedBidInput) {
 		switch (p) {
@@ -199,6 +253,7 @@ export const AcceptedBidInputProxy: ProxyHandler<AcceptedBidInput> = {
 		}
 	}
 };
+*/
 
 export interface ResultInput extends InputInterface {
 	function: SetFunctions.result;
@@ -299,7 +354,6 @@ export interface GetProposedExecutableInput extends InputInterface {
 
 export type InputType =
 	| BidInput
-	| AcceptedBidInput
 	| ProposedExecutableInput
 	| ResultInput
 	| ValidationLockInput

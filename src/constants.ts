@@ -2,11 +2,17 @@
 // this thing needs to be a function cause smartweave might not be defined
 // sometimes.
 
-/* eslint-disable new-cap */
-
 declare const SmartWeave: any;
 export const START_BLOCK = () => Number(SmartWeave.block.height);
 export const END_BLOCK = () => START_BLOCK() + 1000;
+export const EXECUTION_COST = (
+	start_height: number,
+	start_cost: number
+) => start_cost + (START_BLOCK() - start_height) * 10;
+export const PRICE_INCREASE_PER_BLOCK = 1;
+export const DEFAULT_MAX_PRICE = 100;
+export const PROPORTION_OF_TOTAL_STAKE_FOR_EXECUTION = 0.3;
+export const PROPORTION_OF_PRICE_FOR_UPLOADERS_BONUS = 0.01;
 export const MIN_BAL_FOR_PROPOSAL = 0;
 export const MIN_BAL_FOR_BIDDING = 0;
 export const MIN_BAL_FOR_STAKING = 0;

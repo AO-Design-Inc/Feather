@@ -1,5 +1,5 @@
 // Report bug with eslint & xo with defaults in generic
-import {ValidationStages, ValidationAnnounce} from './validate';
+import {ValidationStages} from './validate';
 declare const SmartWeave: any;
 
 export async function decipher(l: [string, string]): Promise<string> {
@@ -24,12 +24,21 @@ export function lastElement<T extends {next: T | undefined}>(
 	return list.next ? lastElement(list.next) : list;
 }
 
-export function lastElementArray<T>(array: T[]): T {
-	return array[array.length - 1];
+export function lastElementArray<T>(array: ArrayNonZero<T>): T {
+	return array[lastElementArrayIndex(array)];
 }
 
-export function lastElementArrayIndex<T>(array: T[]): number {
-	return array.length - 1;
+export type ArrayNonZero<T> = {0: T} & T[];
+export function isArrayNonZero<T>(
+	array: T[]
+): array is ArrayNonZero<T> {
+	return typeof array[0] !== 'undefined';
+}
+
+export function lastElementArrayIndex<T>(
+	array: ArrayNonZero<T>
+): number {
+	return array.length === 0 ? 0 : array.length - 1;
 }
 
 export function getElements<T extends {next: T | undefined}>(
@@ -130,6 +139,9 @@ function mulberry32(a: number) {
 	};
 }
 
-export function removeElementByIndex<T>(from: Array<T>, index: number): Array<T> {
-	return from.slice(0,index).concat(from.slice(index + 1));
+export function removeElementByIndex<T>(
+	from: T[],
+	index: number
+): T[] {
+	return from.slice(0, index).concat(from.slice(index + 1));
 }

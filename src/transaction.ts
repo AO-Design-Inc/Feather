@@ -24,6 +24,7 @@ export class Account {
 	readonly value: AccountInterface | Required<AccountInterface>;
 	/** Haven't fully decided between camelCase and underscore_case */
 	private readonly block_height: number;
+	private readonly account_address: ArweaveAddress;
 
 	constructor(
 		accounts: Record<ArweaveAddress, AccountInterface>,
@@ -38,6 +39,7 @@ export class Account {
 
 		this.value = accounts[account_address];
 		this.block_height = SmartWeave.block.height;
+		this.account_address = account_address;
 	}
 
 	// Only call this if you KNOW you're dealing with a validator
@@ -100,14 +102,30 @@ export class Account {
 		this.value.vaults.push(vault);
 	}
 
+	/** Used to pay to an account, checks that amount is not illegal.
+	 * presently not very happy with how this works, would be nice to have
+	 * a way for this to be *sure* that the money is coming from an account
+	 * that is valid.
+	 * @param amount - amount to add to balance, checks that amount is > 0.
+	 */
+	increase_balance(from_account: Account, amount: number): void {
+		from_account.remove_vault(amount);
+		this.value.balance += amount;
+	}
+
 	/** Removes a vault from the account, this should permit a deduction
 	 * from the balance. Be careful removing vaults without deducting
 	 * balances because the function they're associated with may not then
 	 * be able to complete!
 	 * @returns Promise
 	 */
-	remove_vault(amount: number): void {
+	private remove_vault(amount: number): void {
 		const amounts_array = this.valid_vaults.map((_) => _.amount);
+
+		// MAKE SURE THIS IS REMOVED IN OFFICIAL CONTRACT
+		if (this.account_address === 'regulator') {
+			return;
+		}
 
 		if (amounts_array.includes(amount)) {
 			this.value.balance -= amount;
@@ -117,15 +135,5 @@ export class Account {
 		} else {
 			throw new ContractError(`no vault of quantity ${amount}`);
 		}
-	}
-
-	/** Used to pay to an account, checks that amount is not illegal.
-	 * presently not very happy with how this works, would be nice to have
-	 * a way for this to be *sure* that the money is coming from an account
-	 * that is valid.
-	 * @param amount - amount to add to balance, checks that amount is > 0.
-	 */
-	increase_balance(from_account: Account, amount: number): void {
-		from_account.remove_vault(amount), (this.value.balance += amount);
 	}
 }

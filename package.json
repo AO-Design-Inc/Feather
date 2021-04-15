@@ -1,6 +1,6 @@
 {
 	"scripts": {
-		"test": "xo",
+		"test": "jest",
 		"build-ts": "node build.js"
 	},
 	"devDependencies": {
@@ -15,11 +15,24 @@
 		"typescript.api": "^0.7.7",
 		"xo": "^0.36.1"
 	},
+	"jest": {
+		"preset": "ts-jest",
+		"testEnvironment": "node",
+		"globals" : {
+			"ts-jest": {
+				"ts-config": "./tsconfig.json"
+			}
+		}
+	},
 	"xo": {
-		"prettier": true
+		"prettier": true,
+		"rules": {
+			"new-cap": "off"
+		}
 	},
 	"dependencies": {
 		"arweave": "^1.10.13",
+		"promises-tho": "^1.1.0",
 		"smartweave": "^0.4.27"
 	}
 }

@@ -3,14 +3,18 @@
 		"esModuleInterop": true,
 		"outDir": "built",
 		"downlevelIteration": true,
+		"module" : "ESNext",
 		"moduleResolution": "node",
-		"allowSyntheticDefaultImports": true,
 		"lib": ["es2019", "es6", "dom"],
 		"target": "ESNext",
 		"strict": true,
-		"alwaysStrict": true,
-		"strictNullChecks": true,
-		"strictFunctionTypes": false
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": false,
+		"noPropertyAccessFromIndexSignature": false
+
 	},
 	"typedocOptions": {
 		"entryPoints": "src",
