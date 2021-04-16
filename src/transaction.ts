@@ -7,7 +7,7 @@ import {
 	VaultInterface,
 	AccountInterface,
 	ArweaveAddress
-} from './interfaces';
+} from './faces';
 
 declare const ContractError: any;
 declare const SmartWeave: any;

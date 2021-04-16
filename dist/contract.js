@@ -9,6 +9,7 @@ var Account = class {
     }
     this.value = accounts[account_address];
     this.block_height = SmartWeave.block.height;
+    this.account_address = account_address;
   }
   burn(proportion) {
     var _a;
@@ -35,8 +36,15 @@ var Account = class {
     }
     this.value.vaults.push(vault);
   }
+  increase_balance(from_account, amount) {
+    from_account.remove_vault(amount);
+    this.value.balance += amount;
+  }
   remove_vault(amount) {
     const amounts_array = this.valid_vaults.map((_) => _.amount);
+    if (this.account_address === "regulator") {
+      return;
+    }
     if (amounts_array.includes(amount)) {
       this.value.balance -= amount;
       this.value.vaults = this.valid_vaults.filter((_, i) => i !== amounts_array.indexOf(amount));
@@ -44,12 +52,17 @@ var Account = class {
       throw new ContractError(`no vault of quantity ${amount}`);
     }
   }
-  increase_balance(from_account, amount) {
-    from_account.remove_vault(amount), this.value.balance += amount;
-  }
 };
 
-// src/interfaces.ts
+// src/constants.ts
+var START_BLOCK = () => Number(SmartWeave.block.height);
+var END_BLOCK = () => START_BLOCK() + 1e3;
+var PRICE_INCREASE_PER_BLOCK = 1;
+var DEFAULT_MAX_PRICE = 100;
+var PROPORTION_OF_TOTAL_STAKE_FOR_EXECUTION = 0.3;
+var PROPORTION_OF_PRICE_FOR_UPLOADERS_BONUS = 0.01;
+
+// src/faces.ts
 var GetFunctions;
 (function(GetFunctions2) {
   GetFunctions2["proposed"] = "proposed";
@@ -64,9 +77,7 @@ var SetFunctions;
 (function(SetFunctions2) {
   SetFunctions2["propose"] = "propose";
   SetFunctions2["bid"] = "bid";
-  SetFunctions2["accept"] = "accept";
   SetFunctions2["result"] = "result";
-  SetFunctions2["validate"] = "validate";
   SetFunctions2["validate_lock"] = "validate_lock";
   SetFunctions2["validate_release"] = "validate_release";
 })(SetFunctions || (SetFunctions = {}));
@@ -78,6 +89,7 @@ var AccountFunctions;
 var isArweaveAddress = (addy) => /[\w-]{43}/i.test(addy);
 var ProposedExecutableInputProxy = {
   get(target, p) {
+    var _a, _b;
     switch (p) {
       case "executable_address":
         if (isArweaveAddress(target.executable_address)) {
@@ -95,10 +107,34 @@ var ProposedExecutableInputProxy = {
 					${target.executable_kind}
 					is not valid executable type
 					`);
+      case "input_to_executable":
+        ContractAssert(typeof target.input_to_executable !== "undefined", "No input to executable");
+        if (isArweaveAddress(target.input_to_executable)) {
+          return target.input_to_executable;
+        }
+        throw new ContractError("invalid input address");
+      case "start_cost":
+        if (typeof target.start_cost === "undefined") {
+          return 0;
+        }
+        ContractAssert(typeof target.max_cost === "number", "max cost must be defined with start cost");
+        if (isValidBid(target.start_cost)) {
+          ContractAssert(target.max_cost > target.start_cost, "max cost must be greater than start cost");
+          return target.start_cost;
+        }
+        throw new ContractError("Invalid start cost");
+      case "max_cost": {
+        ContractAssert(typeof target.max_cost === "number", "max cost must be a number");
+        const start_cost = (_a = target.start_cost) != null ? _a : 0;
+        const max_cost = (_b = target.max_cost) != null ? _b : start_cost + DEFAULT_MAX_PRICE;
+        if (isValidBid(max_cost)) {
+          ContractAssert(max_cost > start_cost, "max cost must be greater than start cost");
+          return max_cost;
+        }
+        throw new ContractError("Invalid max cost");
+      }
       default:
-        throw new ContractError(`
-					${String(p)} is invalid key
-					`);
+        throw new ContractError("invalid key");
     }
   }
 };
@@ -129,21 +165,6 @@ var BidInputProxy = {
     }
   }
 };
-var AcceptedBidInputProxy = {
-  get(target, p) {
-    switch (p) {
-      case "accepted_bid":
-        ContractAssert(isValidBid(target.accepted_bid.quantity), "invalid amount");
-        ContractAssert(isArweaveAddress(target.accepted_bid.bidder), "bad accepted bid bidder");
-        return target.accepted_bid;
-      case "executable_key":
-        ContractAssert(isArweaveAddress(target.executable_key), "not valid executable key");
-        return target.executable_key;
-      default:
-        throw new ContractError("invalid key");
-    }
-  }
-};
 var ResultInputProxy = {
   get(target, p) {
     switch (p) {
@@ -171,8 +192,6 @@ var ResultInputProxy = {
 var ValidationLockInputProxy = {
   get(target, p) {
     switch (p) {
-      case "encrypted_hash":
-        return target.encrypted_hash;
       case "executable_key":
         ContractAssert(isArweaveAddress(target.executable_key), "invalid executable key (not arweave address)");
         return target.executable_key;
@@ -202,8 +221,11 @@ var ValidationReleaseInputProxy = {
 async function decipher(l) {
   return SmartWeave.arweave.crypto.decrypt(Buffer.from(l[1], "hex"), l[0]).then((_) => _.toString());
 }
+function isArrayNonZero(array) {
+  return typeof array[0] !== "undefined";
+}
 function lastElementArrayIndex(array) {
-  return array.length - 1;
+  return array.length === 0 ? 0 : array.length - 1;
 }
 function getElements(list) {
   const retarr = [];
@@ -294,7 +316,6 @@ function validationAnnouncedToLocked(lock_input) {
     return new ValidationLockState({
       ...i,
       _discriminator: "lock",
-      encrypted_hash: lock_input.encrypted_hash,
       encrypted_obj: lock_input.encrypted_obj
     });
   };
@@ -329,31 +350,11 @@ var ProposedState = class extends ExecutableState {
     }
     super(value);
   }
-};
-var default_timings = () => {
-  return {
-    start: SmartWeave.block.height,
-    end: SmartWeave.block.height + 1e3
-  };
-};
-var AcceptedState = class extends ExecutableState {
-  constructor(value) {
-    if (!isOfDiscriminatedType(value, "accepted")) {
-      throw new ContractError("executable not in accepted state!");
-    }
-    super(value);
+  get activeBids() {
+    return this.value.bids.filter((_) => this.currentPrice >= _.quantity);
   }
-  get accepted_bid() {
-    return this.value.accepted_bid;
-  }
-  get caller() {
-    return this.value.caller;
-  }
-  post_collateral(result_giver_account) {
-    result_giver_account.add_vault({
-      amount: 0.1 * this.accepted_bid.quantity,
-      ...default_timings()
-    });
+  get currentPrice() {
+    return this.value.start_cost + (START_BLOCK() - this.value.executable.birth_height) * PRICE_INCREASE_PER_BLOCK;
   }
 };
 function initialiseValidationState(i) {
@@ -368,21 +369,27 @@ function initialiseValidationState(i) {
       throw new ContractError("impossible!");
   }
 }
-var ResultState = class extends ExecutableState {
+var AcceptedState = class extends ExecutableState {
   constructor(value) {
-    if (!isOfDiscriminatedType(value, "result")) {
-      throw new ContractError("executable not in result state!");
+    if (!isOfDiscriminatedType(value, "accepted")) {
+      throw new ContractError("executable not in accepted state!");
     }
     super(value);
     this.validations = getElements(this.value.validation_linked_list).map((v) => v.value.map(initialiseValidationState));
   }
   get validation_tail() {
-    return this.validations[lastElementArrayIndex(this.validations)];
+    if (isArrayNonZero(this.validations)) {
+      return this.validations[lastElementArrayIndex(this.validations)];
+    }
+    throw new ContractError("validation tail does not exist if no validations");
   }
   get used_validators() {
     return this.validations.flatMap((_) => _.map((_2) => _2.value.validator));
   }
   lock_validation(validation_index, input_proxy) {
+    if (this.validation_tail.filter((_) => isOfDiscriminatedType(_.value, "lock")).some((_) => _.value.encrypted_obj === input_proxy.encrypted_obj)) {
+      throw new ContractError("cannot have identical encrypted objects!");
+    }
     this.validation_tail[validation_index] = new ValidationLockState(this.validation_tail[validation_index].next(validationAnnouncedToLocked(input_proxy)).value);
   }
   release_validation(validation_index, input_proxy) {
@@ -407,69 +414,84 @@ var ResultState = class extends ExecutableState {
       throw new ContractError("cannot branch if validations not released");
     }
     const deciphered_promises = vt.map(async (_) => decipher([_.symm_key, _.encrypted_obj]));
-    return Promise.all(deciphered_promises).then((deciphered) => {
-      const is_correct = JSON.parse(deciphered[0]).is_correct;
-      if (deciphered.every((_) => _ === deciphered[0])) {
-        return this.next(() => new ValidatedState({
-          ...this.consume(),
-          _discriminator: "validated",
-          is_correct
-        }, accounts));
-      }
-      this.validations.push(generateValidators(new Account(accounts, "regulator"), 0.05 * this.value.accepted_bid.quantity, this.allowed_validators(validators)).map((_) => new ValidationAnnounceState(_)));
-      return this;
-    }).catch((error) => {
-      throw new ContractError(`${String(error)}`);
-    });
+    const deciphered_array = await Promise.all(deciphered_promises);
+    if (deciphered_array.every((_) => _ === deciphered_array[0])) {
+      const correct_hash = deciphered_array[0];
+      const corr_validators = await this.correct_validators(correct_hash);
+      const resultGiverReturner = getWeightedProbabilityElement(Number(SmartWeave.block.indep_hash));
+      const resultGiver = resultGiverReturner(Array.from(corr_validators).map((_) => [_, 1]));
+      return this.next(() => new ValidatedState({
+        ...this.consume(),
+        result_giver: resultGiver,
+        _discriminator: "validated"
+      }, accounts, corr_validators));
+    }
+    this.validations.push(generateValidators(this.allowed_validators(validators)).map((_) => new ValidationAnnounceState(_)));
+    return this;
+  }
+  async correct_validators(correct_hash) {
+    const flat_validations = this.validations.flat();
+    if (!isArrayOfDiscriminatedTypes(flat_validations, "release")) {
+      throw new ContractError("cannot branch if validations not released");
+    }
+    return flat_validations.reduce(async (acc, cur) => {
+      return await decipher([cur.symm_key, cur.encrypted_obj]) === correct_hash ? (await acc).concat([cur.validator]) : acc;
+    }, Promise.resolve([]));
   }
 };
 var ValidatedState = class extends ExecutableState {
   get validation_tail() {
-    return this.validations[lastElementArrayIndex(this.validations)];
+    if (isArrayNonZero(this.validations)) {
+      return this.validations[lastElementArrayIndex(this.validations)];
+    }
+    throw new ContractError("validation tail does not exist if no validations");
   }
-  constructor(value, accounts) {
+  constructor(value, accounts, correct_validators) {
     if (!isOfDiscriminatedType(value, "validated")) {
       throw new ContractError("executable not in validated state!");
     }
     super(value);
-    const regulator_account = new Account(accounts, "regulator");
-    const result_giver_account = new Account(accounts, this.value.result.giver);
     this.validations = getElements(this.value.validation_linked_list).map((v) => v.value.map((_) => new ValidationReleaseState(_)));
+    if (typeof accounts !== "undefined" && typeof correct_validators !== "undefined") {
+      this.handlePayments(accounts, correct_validators);
+    }
+  }
+  handlePayments(accounts, correct_validators) {
+    const regulator_account = new Account(accounts, "regulator");
+    const result_giver_account = new Account(accounts, this.value.result_giver);
     this.validations.flat().forEach(async (_) => {
       const validator_account = new Account(accounts, _.value.validator);
-      if (await decipher([
-        _.value.symm_key,
-        _.value.encrypted_obj
-      ]) === await decipher([
-        this.validation_tail[0].value.symm_key,
-        this.validation_tail[0].value.encrypted_obj
-      ])) {
-        validator_account.increase_balance(regulator_account, 0.05 * this.value.accepted_bid.quantity);
+      if (correct_validators.includes(_.value.validator)) {
+        validator_account.increase_balance(regulator_account, 0.5 * this.value.accepted_cost);
       } else {
         validator_account.burn(0.5);
       }
     });
-    if (this.value.is_correct) {
-      result_giver_account.increase_balance(new Account(accounts, this.value.caller), this.value.accepted_bid.quantity);
-    }
-    regulator_account.increase_balance(result_giver_account, 0.1 * this.value.accepted_bid.quantity);
+    result_giver_account.increase_balance(regulator_account, 1);
   }
 };
-function proposedToAccepted(acc_input) {
+var ResultState = class extends ExecutableState {
+  constructor(value) {
+    if (!isOfDiscriminatedType(value, "result")) {
+      throw new ContractError("executable not in result state!");
+    }
+    super(value);
+  }
+};
+function proposedToAccepted(validators) {
   return (i) => {
     return new AcceptedState({
       ...i,
       _discriminator: "accepted",
-      accepted_bid: acc_input.accepted_bid
+      validation_linked_list: {
+        value: generateValidators(validators),
+        next: void 0
+      },
+      accepted_cost: new ProposedState(i).currentPrice
     });
   };
 }
-function generateValidators(regulator, fee, validators) {
-  validators.forEach(() => regulator.add_vault({
-    amount: fee,
-    end: Number(SmartWeave.block.height) + 1e3,
-    start: Number(SmartWeave.block.height)
-  }));
+function generateValidators(validators) {
   const validatorReturner = getWeightedProbabilityElement(Number(SmartWeave.block.indep_hash));
   const validator1 = validatorReturner(Array.from(validators).map((_) => [_, _[1].stake]));
   validators.delete(validator1);
@@ -479,19 +501,15 @@ function generateValidators(regulator, fee, validators) {
     {_discriminator: "announce", validator: validator2[0]}
   ];
 }
-function acceptedToResult(result_input, caller, validators, accounts) {
+function validatedToResult(result_input, caller) {
   return (i) => {
     return new ResultState({
       ...i,
       _discriminator: "result",
-      validation_linked_list: {
-        value: generateValidators(new Account(accounts, "regulator"), 0.05 * i.accepted_bid.quantity, validators),
-        next: void 0
-      },
       result: {
         address: result_input.result_address,
         giver: caller,
-        height: SmartWeave.block.height
+        height: START_BLOCK()
       }
     });
   };
@@ -501,12 +519,21 @@ function acceptedToResult(result_input, caller, validators, accounts) {
 function getValidators(state) {
   return Object.fromEntries(Object.entries(state.accounts).filter((value) => typeof value[1].stake !== "undefined"));
 }
-export async function handle(state, action) {
+async function handle(state, action) {
+  var _a, _b;
   switch (action.input.function) {
     case "propose": {
       const inputProxy = new Proxy(action.input, ProposedExecutableInputProxy);
+      const proposer_account = new Account(state.accounts, action.caller);
+      proposer_account.add_vault({
+        amount: inputProxy.max_cost + PROPORTION_OF_PRICE_FOR_UPLOADERS_BONUS * inputProxy.max_cost,
+        start: START_BLOCK(),
+        end: END_BLOCK()
+      });
       const proposed_exec = new ProposedState({
         _discriminator: "proposed",
+        start_cost: inputProxy.start_cost,
+        max_cost: inputProxy.max_cost,
         bids: [],
         caller: action.caller,
         executable: {
@@ -520,63 +547,55 @@ export async function handle(state, action) {
     }
     case "bid": {
       const inputProxy = new Proxy(action.input, BidInputProxy);
-      const ref_exec = new ProposedState(state.executables[inputProxy.executable_key]);
-      ref_exec.value.bids.push({
-        bidder: action.caller,
-        quantity: inputProxy.quantity
-      });
-      state.executables[inputProxy.executable_key] = ref_exec.value;
-      return {state};
-    }
-    case "accept": {
-      const inputProxy = new Proxy(action.input, AcceptedBidInputProxy);
-      const ref_exec = state.executables[inputProxy.executable_key];
-      ContractAssert(ref_exec.caller === action.caller, `${action.caller} is not creator of proposal`);
+      const ref_exec = (_a = state.executables[inputProxy.executable_key]) != null ? _a : void 0;
+      ContractAssert(typeof ref_exec !== "undefined", "referenced executable does not exist");
+      const bidder = (_b = state.accounts[action.caller]) != null ? _b : void 0;
+      ContractAssert(typeof bidder !== "undefined", "caller does not have an account");
       const proposed_exec = new ProposedState(ref_exec);
-      const accepted_exec = proposed_exec.next(proposedToAccepted(inputProxy));
-      const accepter_account = new Account(state.accounts, ref_exec.caller);
-      accepter_account.add_vault({
-        amount: inputProxy.accepted_bid.quantity,
-        start: SmartWeave.block.height,
-        end: SmartWeave.block.height + 1e3
+      ContractAssert(typeof bidder.stake !== "undefined", "bidder is not an executor");
+      proposed_exec.value.bids.push({
+        bidder: action.caller,
+        quantity: inputProxy.quantity,
+        birth_height: START_BLOCK()
       });
-      state.executables[inputProxy.executable_key] = accepted_exec.value;
-      state.accounts[ref_exec.caller] = accepter_account.value;
+      const TOTAL_STAKE = Object.entries(state.accounts).reduce((acc, cur) => acc + cur[1].stake, 0);
+      const validators = new Set(proposed_exec.activeBids.map((_) => [_.bidder, state.accounts[_.bidder]]));
+      const propToAcc = proposedToAccepted(validators);
+      const next_exec = proposed_exec.activeBids.reduce((acc, cur) => acc + state.accounts[cur.bidder].stake, 0) >= PROPORTION_OF_TOTAL_STAKE_FOR_EXECUTION * TOTAL_STAKE ? proposed_exec.next(propToAcc) : proposed_exec;
+      state.executables[inputProxy.executable_key] = next_exec.consume();
       return {state};
     }
     case "result": {
       const inputProxy = new Proxy(action.input, ResultInputProxy);
       const ref_exec = state.executables[inputProxy.executable_key];
-      const accepted_exec = new AcceptedState(ref_exec);
-      ContractAssert(accepted_exec.accepted_bid.bidder === action.caller, "result not made by winning bidder!");
-      const validators = getValidators(state);
-      const result_giver_account = new Account(state.accounts, action.caller);
-      accepted_exec.post_collateral(result_giver_account);
-      const result_exec = accepted_exec.next(acceptedToResult(inputProxy, action.caller, new Set(Object.entries(validators)), state.accounts));
+      const validated_exec = new ValidatedState(ref_exec);
+      ContractAssert(validated_exec.value.result_giver === action.caller, "result not made by winning bidder!");
+      const result_exec = validated_exec.next(validatedToResult(inputProxy, action.caller));
       state.executables[inputProxy.executable_key] = result_exec.consume();
       return {state};
     }
     case "validate_lock": {
       const inputProxy = new Proxy(action.input, ValidationLockInputProxy);
       const ref_exec = state.executables[inputProxy.executable_key];
-      const result_exec = new ResultState(ref_exec);
-      const matched_validation_index = result_exec.validation_tail.findIndex((_) => _.value.validator === action.caller && _.value._discriminator === "announce");
+      const accepted_exec = new AcceptedState(ref_exec);
+      const matched_validation_index = accepted_exec.validation_tail.findIndex((_) => _.value.validator === action.caller && _.value._discriminator === "announce");
       ContractAssert(matched_validation_index !== -1, "no matching validation!");
-      result_exec.lock_validation(matched_validation_index, inputProxy);
-      state.executables[inputProxy.executable_key] = result_exec.consume();
+      accepted_exec.lock_validation(matched_validation_index, inputProxy);
+      state.executables[inputProxy.executable_key] = accepted_exec.consume();
       return {state};
     }
     case "validate_release": {
       const inputProxy = new Proxy(action.input, ValidationReleaseInputProxy);
       const ref_exec = state.executables[inputProxy.executable_key];
-      const result_exec = new ResultState(ref_exec);
-      if (!result_exec.validation_tail.every((_) => _.value._discriminator !== "announce"))
+      const accepted_exec = new AcceptedState(ref_exec);
+      if (!accepted_exec.validation_tail.every((_) => _.value._discriminator !== "announce")) {
         throw new ContractError("entire vll is not locked");
-      const matched_validation_index = result_exec.validation_tail.findIndex((value) => value.value.validator === action.caller && value.value._discriminator === "lock");
+      }
+      const matched_validation_index = accepted_exec.validation_tail.findIndex((value) => value.value.validator === action.caller && value.value._discriminator === "lock");
       ContractAssert(matched_validation_index !== -1, "no matching validation!");
-      result_exec.release_validation(matched_validation_index, inputProxy);
+      accepted_exec.release_validation(matched_validation_index, inputProxy);
       try {
-        const next_exec = result_exec.check_fully_released() ? await result_exec.branch(getValidators(state), state.accounts) : result_exec;
+        const next_exec = accepted_exec.check_fully_released() ? await accepted_exec.branch(getValidators(state), state.accounts) : accepted_exec;
         state.executables[inputProxy.executable_key] = next_exec.consume();
         return {state};
       } catch (error) {
@@ -591,3 +610,6 @@ export async function handle(state, action) {
       throw new ContractError("Invalid function call");
   }
 }
+export {
+  handle
+};

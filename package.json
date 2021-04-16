@@ -1,5 +1,6 @@
 {
 	"scripts": {
+		"test-depr": "node --experimental-vm-modules node_modules/.bin/jest",
 		"test": "jest",
 		"build-ts": "node build.js"
 	},
@@ -16,13 +17,9 @@
 		"xo": "^0.36.1"
 	},
 	"jest": {
+		"verbose": true,
 		"preset": "ts-jest",
-		"testEnvironment": "node",
-		"globals" : {
-			"ts-jest": {
-				"ts-config": "./tsconfig.json"
-			}
-		}
+		"testEnvironment": "node"
 	},
 	"xo": {
 		"prettier": true,
@@ -33,6 +30,7 @@
 	"dependencies": {
 		"arweave": "^1.10.13",
 		"promises-tho": "^1.1.0",
-		"smartweave": "^0.4.27"
+		"smartweave": "^0.4.27",
+		"smartweave-testing": "^0.2.0"
 	}
 }

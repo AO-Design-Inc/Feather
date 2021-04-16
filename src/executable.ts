@@ -15,8 +15,9 @@ import {
 	BidInterface,
 	AccountInterface,
 	ValidationLockInput,
-	ValidationReleaseInput
-} from './interfaces';
+	ValidationReleaseInput,
+	ResultInput
+} from './faces';
 import {
 	ValidationAnnounce,
 	ValidationRelease,
@@ -39,10 +40,7 @@ import {
 	decipher,
 	isArrayNonZero
 } from './utils';
-import {
-	PRICE_INCREASE_PER_BLOCK,
-	START_BLOCK
-} from './constants';
+import {PRICE_INCREASE_PER_BLOCK, START_BLOCK} from './constants';
 import {Account} from './transaction';
 
 /**
@@ -224,10 +222,11 @@ export class AcceptedState extends ExecutableState<AcceptedExecutable> {
 						(_ as ValidationLockState).value.encrypted_obj ===
 						input_proxy.encrypted_obj
 				)
-		)
+		) {
 			throw new ContractError(
 				'cannot have identical encrypted objects!'
 			);
+		}
 
 		this.validation_tail[validation_index] = new ValidationLockState(
 			(this.validation_tail[
@@ -386,24 +385,33 @@ export class ValidatedState extends ExecutableState<ValidatedExecutable> {
 	// Handle payments and punishments in constructor!
 	constructor(
 		value: ExecutableStates,
-		accounts: Record<ArweaveAddress, AccountInterface>,
-		correct_validators: ArweaveAddress[]
+		accounts?: Record<ArweaveAddress, AccountInterface>,
+		correct_validators?: ArweaveAddress[]
 	) {
-		const true_value = {...value, result_giver: 'me'};
 		if (
-			!isOfDiscriminatedType<ValidatedExecutable>(
-				true_value,
-				'validated'
-			)
+			!isOfDiscriminatedType<ValidatedExecutable>(value, 'validated')
 		) {
 			throw new ContractError('executable not in validated state!');
 		}
 
-		super(true_value);
+		super(value);
 
 		this.validations = getElements(
 			this.value.validation_linked_list
 		).map((v) => v.value.map((_) => new ValidationReleaseState(_)));
+
+		if (
+			typeof accounts !== 'undefined' &&
+			typeof correct_validators !== 'undefined'
+		) {
+			this.handlePayments(accounts, correct_validators);
+		}
+	}
+
+	private handlePayments(
+		accounts: Record<ArweaveAddress, AccountInterface>,
+		correct_validators: ArweaveAddress[]
+	) {
 
 		const regulator_account = new Account(accounts, 'regulator');
 		const result_giver_account = new Account(
@@ -428,13 +436,6 @@ export class ValidatedState extends ExecutableState<ValidatedExecutable> {
 		});
 
 		result_giver_account.increase_balance(regulator_account, 1);
-
-		/*
-		Regulator_account.increase_balance(
-			result_giver_account,
-			0.1 * this.value.accepted_bid.quantity
-		);
-		*/
 	}
 }
 
@@ -553,7 +554,7 @@ function generateValidators(
 }
 
 /*
-export function acceptedToResult(
+Export function acceptedToResult(
 	result_input: ResultInput,
 	caller: ArweaveAddress
 ): InputApplier<AcceptedExecutable> {
@@ -572,3 +573,22 @@ export function acceptedToResult(
 	};
 }
 */
+
+export function validatedToResult(
+	result_input: ResultInput,
+	caller: ArweaveAddress
+): InputApplier<ValidatedExecutable> {
+	return (
+		i: ValidatedExecutable
+	): ExecutableState<ResultExecutable> => {
+		return new ResultState({
+			...i,
+			_discriminator: 'result',
+			result: {
+				address: result_input.result_address,
+				giver: caller,
+				height: START_BLOCK()
+			}
+		});
+	};
+}

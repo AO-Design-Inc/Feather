@@ -13,7 +13,7 @@ import {
 	ArweaveAddress,
 	ValidationLockInput,
 	ValidationReleaseInput
-} from './interfaces';
+} from './faces';
 import {isOfDiscriminatedType} from './utils';
 export type ValidationStages =
 	| ValidationAnnounce

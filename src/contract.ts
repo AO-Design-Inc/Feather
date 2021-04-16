@@ -26,14 +26,15 @@ import {
 	ActionInterface,
 	StateInterface,
 	ContractHandlerOutput
-} from './interfaces';
+} from './faces';
 import {
 	ProposedExecutable,
 	ProposedState,
 	AcceptedState,
 	proposedToAccepted,
 	ValidatedExecutable,
-	ResultExecutable
+	ValidatedState,
+	validatedToResult
 } from './executable';
 import {
 	START_BLOCK,
@@ -263,9 +264,15 @@ export async function handle(
 				inputProxy.executable_key
 			] as ValidatedExecutable;
 
+			const validated_exec = new ValidatedState(ref_exec);
+
 			ContractAssert(
-				ref_exec.result_giver === action.caller,
+				validated_exec.value.result_giver === action.caller,
 				'result not made by winning bidder!'
+			);
+
+			const result_exec = validated_exec.next(
+				validatedToResult(inputProxy, action.caller)
 			);
 
 			/** {@link Account | Account class} used to
@@ -279,32 +286,9 @@ export async function handle(
 			 *);
 			 */
 
-			const result_exec: ResultExecutable = {
-				...ref_exec,
-				result: {
-					address: inputProxy.result_address,
-					height: START_BLOCK(),
-					giver: action.caller
-				},
-				_discriminator: 'result'
-			};
-
-			/*
-			Const result_exec = accepted_exec.next(
-				acceptedToResult(
-					inputProxy,
-					action.caller,
-					new Set(Object.entries(validators)),
-					state.accounts
-				)
-			);
-			*/
-
-			// Validate!
-			// Wait... There is no result executable, it IS the
-			// validating executable.
-
-			state.executables[inputProxy.executable_key] = result_exec;
+			state.executables[
+				inputProxy.executable_key
+			] = result_exec.consume();
 			return {state};
 		}
 
@@ -327,11 +311,11 @@ export async function handle(
 				ValidationLockInputProxy
 			);
 			const ref_exec = state.executables[inputProxy.executable_key];
-			const result_exec = new AcceptedState(ref_exec);
+			const accepted_exec = new AcceptedState(ref_exec);
 
 			// With Linked list we do this instead.
 
-			const matched_validation_index = result_exec.validation_tail.findIndex(
+			const matched_validation_index = accepted_exec.validation_tail.findIndex(
 				(_) =>
 					_.value.validator === action.caller &&
 					_.value._discriminator === 'announce'
@@ -342,14 +326,14 @@ export async function handle(
 				'no matching validation!'
 			);
 
-			result_exec.lock_validation(
+			accepted_exec.lock_validation(
 				matched_validation_index,
 				inputProxy
 			);
 
 			state.executables[
 				inputProxy.executable_key
-			] = result_exec.consume();
+			] = accepted_exec.consume();
 
 			return {state};
 		}
@@ -361,16 +345,17 @@ export async function handle(
 			);
 
 			const ref_exec = state.executables[inputProxy.executable_key];
-			const result_exec = new AcceptedState(ref_exec);
+			const accepted_exec = new AcceptedState(ref_exec);
 
 			if (
-				!result_exec.validation_tail.every(
+				!accepted_exec.validation_tail.every(
 					(_) => _.value._discriminator !== 'announce'
 				)
-			)
+			) {
 				throw new ContractError('entire vll is not locked');
+			}
 
-			const matched_validation_index = result_exec.validation_tail.findIndex(
+			const matched_validation_index = accepted_exec.validation_tail.findIndex(
 				(value) =>
 					value.value.validator === action.caller &&
 					value.value._discriminator === 'lock'
@@ -381,18 +366,19 @@ export async function handle(
 				'no matching validation!'
 			);
 
-			result_exec.release_validation(
+			accepted_exec.release_validation(
 				matched_validation_index,
 				inputProxy
 			);
 
 			try {
-				const next_exec = result_exec.check_fully_released()
-					? await result_exec.branch(
+				const next_exec = accepted_exec.check_fully_released()
+					? await accepted_exec.branch(
 							getValidators(state),
 							state.accounts
 					  )
-					: result_exec;
+					: accepted_exec;
+
 				state.executables[
 					inputProxy.executable_key
 				] = next_exec.consume();
